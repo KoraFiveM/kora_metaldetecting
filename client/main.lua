@@ -1,9 +1,9 @@
-local detecting = false
-local searching = false
+local active = false
+local detecting = true
 local detectorProp
 local detectionText
 local detectionTextId
-local nextAttemptAt = 0
+local currentCooldownMs = 55000
 local shopsReady = false
 
 local function notify(message, type_)
@@ -48,7 +48,8 @@ end
 local function cleanupDetector()
     local ped = PlayerPedId()
     if detectorProp then
-        QB.anim.detachProp(detectorProp)
+        DetachEntity(detectorProp, true, true)
+        QB.entities.remove(detectorProp)
         detectorProp = nil
     end
     QB.anim.stop(ped)
@@ -57,153 +58,120 @@ local function cleanupDetector()
 end
 
 local function stopDetecting(tellServer)
-    if not detecting and not detectorProp then return end
-    detecting = false
-    searching = false
+    if not active and not detectorProp then return end
+    active = false
     QB.progressbar.cancel()
     QB.minigames.cancel()
     cleanupDetector()
-    if tellServer then QB.events.trigger('md-metaldetecting:server:stoppedDetecting') end
+    if tellServer then QB.events.trigger('qbmetaldetecting:server:stoppedDetecting') end
+end
+
+local function resumeDetectingLoop()
+    if not active then return end
+    local ped = PlayerPedId()
+    if detectorProp and DoesEntityExist(detectorProp) then SetEntityVisible(detectorProp, true, false) end
+    QB.anim.play(ped, 'anim@heists@narcotics@trash', 'walk', { flag = 51 })
 end
 
 local function playFind(ground)
-    local started = QB.callback.trigger('md-metaldetecting:server:beginFind', ground)
-    if not started or type(started) ~= 'table' then
-        nextAttemptAt = GetGameTimer() + 2000
-        return
-    end
-
-    local result = QB.minigames.play('skillbar', Config.Detection.minigame, started.authorization)
+    local startedAt = GetGameTimer()
+    local result = QB.minigames.play('skillbar', Config.Detection.minigame)
     if not result or not result.success then
-        QB.events.trigger('md-metaldetecting:server:cancelledFind', started.authorization)
-        nextAttemptAt = GetGameTimer() + 1500
         return
     end
 
-    SetEntityVisible(detectorProp, false, false)
-    local completed = QB.progressbar.start({
-        label = 'Digging...',
-        duration = Config.Detection.digDuration,
-        canCancel = true,
-        disable = { combat = true, car = true },
-        anim = {
-            dict = 'amb@world_human_gardener_plant@male@base',
-            clip = 'base',
-            flag = 49,
-        },
-    })
-    if detectorProp and DoesEntityExist(detectorProp) then SetEntityVisible(detectorProp, true, false) end
-    if not completed then
-        QB.events.trigger('md-metaldetecting:server:cancelledFind', started.authorization)
-        nextAttemptAt = GetGameTimer() + 1500
+    local ped = PlayerPedId()
+    QB.anim.stop(ped)
+    if detectorProp and DoesEntityExist(detectorProp) then SetEntityVisible(detectorProp, false, false) end
+
+    TaskStartScenarioInPlace(ped, 'WORLD_HUMAN_GARDENER_PLANT', 0, true)
+    Wait(Config.Detection.digDuration / 2)
+
+    if not active then
         return
     end
 
-    QB.events.trigger('md-metaldetecting:server:completedFind', result.proof, started.authorization)
-    nextAttemptAt = GetGameTimer() + 1000
+    ClearPedTasks(ped)
+    QB.events.trigger('qbmetaldetecting:server:completedFind', ground)
+    Wait(Config.Detection.digDuration)
+    resumeDetectingLoop()
 end
 
 local function beginDetecting(cooldown)
-    if detecting then
+    if active then
         notify('You are already using a metal detector.', 'error')
         return
     end
     if IsPedInAnyVehicle(PlayerPedId(), false) then
         notify('You cannot use a metal detector in a vehicle.', 'error')
-        QB.events.trigger('md-metaldetecting:server:stoppedDetecting')
+        QB.events.trigger('qbmetaldetecting:server:stoppedDetecting')
         return
     end
-
     local ped = PlayerPedId()
-    detectorProp = QB.anim.attachProp(ped, Config.Detection.detectorModel, 57005,
-        vector3(0.8, 0.06, 0.1), vector3(5.0, -99.0, 56.0), { fixedRot = true })
+    detectorProp = QB.entities.create(Config.Detection.detectorModel, GetEntityCoords(ped), {})
+    AttachEntityToEntity(detectorProp, ped, GetPedBoneIndex(ped, 57005), 0.8, 0.06, 0.1, 5.0, -99.0, 56.0, true, true, false, true, 1, true)
     if not detectorProp then
         notify('The metal detector could not be equipped.', 'error')
-        QB.events.trigger('md-metaldetecting:server:stoppedDetecting')
+        QB.events.trigger('qbmetaldetecting:server:stoppedDetecting')
         return
     end
-
-    QB.anim.play(ped, 'amb@world_human_gardener_plant@male@base', 'base', { flag = 49 })
+    QB.anim.play(ped, 'anim@heists@narcotics@trash', 'walk', { flag = 51 })
+    active = true
     detecting = true
-    nextAttemptAt = GetGameTimer() + math.floor((tonumber(cooldown) or 55) * 1000)
+    currentCooldownMs = math.floor((tonumber(cooldown) or 55) * 1000)
 
     CreateThread(function()
-        while detecting do
-            local ground = groundHash()
-            local valid = allowedGround(ground)
-            setDetectionText(valid)
-            if valid and not searching and GetGameTimer() >= nextAttemptAt then
-                searching = true
-                notify('You may have found something.', 'success')
-                Wait(800)
-                playFind(ground)
-                searching = false
+        while active do
+            local time = currentCooldownMs
+            local ground
+
+            repeat
+                ground = groundHash()
+                local valid = allowedGround(ground)
+                setDetectionText(valid)
+                if valid then time = time - 1000 end
+                Wait(1000)
+            until IsEntityDead(ped) or IsPedInAnyVehicle(ped, false) or not active or time <= 0
+
+            if not active then
+                return -- session was stopped elsewhere while we were scanning
             end
-            Wait(500)
-        end
-    end)
 
-    CreateThread(function()
-        while detecting do
             if IsEntityDead(ped) or IsPedInAnyVehicle(ped, false) then
                 if IsPedInAnyVehicle(ped, false) then notify('Metal detecting stopped in a vehicle.', 'error') end
                 stopDetecting(true)
                 return
             end
-            Wait(250)
+
+            notify('You may have found something.', 'success')
+            Wait(800)
+            detecting = false
+            playFind(ground)
+            detecting = true
         end
     end)
 end
 
-local function openBuyMenu(shopIndex)
-    local choice = QB.nui.openMenu({
-        { id = 'cash', label = ('Buy with cash — $%d'):format(Config.Selling.detectorPrice), icon = 'Banknote' },
-        { id = 'bank', label = ('Buy with bank — $%d'):format(Config.Selling.detectorPrice), icon = 'CreditCard' },
-    }, 'Metal Detector Shop')
-    if choice and choice.selectedId then QB.events.trigger('md-metaldetecting:server:purchasedDetector', shopIndex, choice.selectedId) end
-end
-
-local function openSellMenu(shopIndex)
-    local loot = QB.callback.trigger('md-metaldetecting:server:sellingOptionsRequested', shopIndex)
-    if type(loot) ~= 'table' then return end
-    local items = { { id = 'all', label = 'Sell everything', icon = 'ShoppingBag' } }
-    for item, price in pairs(loot) do
-        if exports.qbcore:getItemCount(item) > 0 then
-            local definition = exports.qbcore:getShared('items', item)
-            items[#items + 1] = {
-                id = item,
-                label = definition and definition.label or item,
-                description = ('$%d each'):format(price),
-                icon = 'Coins',
-            }
-        end
-    end
-    local choice = QB.nui.openMenu(items, 'Sell Detected Loot')
-    if choice and choice.selectedId then QB.events.trigger('md-metaldetecting:server:soldLoot', shopIndex, choice.selectedId) end
-end
-
 local function washClump(washIndex)
-    local authorization = QB.callback.trigger('md-metaldetecting:server:beginWash', washIndex)
-    if not authorization then
+    if not exports['qb-core']:HasItem(Config.Items.clump) then
         notify('You need a clump to wash.', 'error')
         return
     end
-    local result = QB.minigames.play('skillbar', Config.Detection.minigame, authorization)
-    if not result or not result.success then
-        QB.events.trigger('md-metaldetecting:server:cancelledWash', authorization)
-        return
-    end
+
+    local result = QB.minigames.play('skillbar', Config.Detection.minigame)
+    if not result or not result.success then return end
+
     if not QB.progressbar.start({
         label = 'Washing clump...',
-        duration = 10000,
+        duration = 5000,
         canCancel = true,
         disable = { combat = true, car = true },
-        scenario = { name = 'WORLD_HUMAN_BUM_WASH', playEnter = true },
+        anim  = { dict = 'mp_arresting', clip = 'a_uncuff', flag = 49 },
     }) then
-        QB.events.trigger('md-metaldetecting:server:cancelledWash', authorization)
         return
     end
-    QB.events.trigger('md-metaldetecting:server:washedClump', result.proof, authorization)
+
+    QB.events.trigger('qbmetaldetecting:server:washedClump', washIndex)
 end
 
 local function addBlip(location)
@@ -218,20 +186,7 @@ local function addBlip(location)
 end
 
 local function initLocations()
-    if shopsReady then return end
-    shopsReady = true
-
-    for index, shop in ipairs(Config.Selling.shop) do
-        addBlip(shop)
-        local ped = QB.entities.create(shop.ped, shop.coords, { preset = 'static' })
-        if ped then TaskStartScenarioInPlace(ped, 'WORLD_HUMAN_STAND_IMPATIENT', 0, true) end
-        QB.interact.addCircleZone(('md-metal-shop-%d'):format(index), shop.coords, 2.5, {
-            options = {
-                { label = ('Buy metal detector — $%d'):format(Config.Selling.detectorPrice), icon = 'ShoppingCart', action = function() openBuyMenu(index) end },
-                { label = 'Sell detected loot', icon = 'Coins', action = function() openSellMenu(index) end },
-            },
-        })
-    end
+   
 
     for index, wash in ipairs(Config.Selling.wash) do
         addBlip(wash)
@@ -243,9 +198,9 @@ local function initLocations()
     end
 end
 
-QB.events.onPush('md-metaldetecting:client:startedDetecting', beginDetecting)
-QB.events.onPush('md-metaldetecting:client:stoppedDetecting', function() stopDetecting(false) end)
-QB.events.onPush('md-metaldetecting:client:foundLoot', function(item)
+QB.events.onPush('qbmetaldetecting:client:startedDetecting', beginDetecting)
+QB.events.onPush('qbmetaldetecting:client:stoppedDetecting', function() stopDetecting(false) end)
+QB.events.onPush('qbmetaldetecting:client:foundLoot', function(item)
     local definition = exports.qbcore:getShared('items', item)
     notify(('You found %s.'):format(definition and definition.label or item), 'success')
 end)

@@ -1,8 +1,5 @@
 local Core = exports.qbcore
-
 local activeDetectors = {}
-local pendingFinds = {}
-local pendingWashes = {}
 local cooldowns = {}
 local delayBySource = {}
 
@@ -26,20 +23,22 @@ local function notify(src, message, type_)
     QB.notify.send(src, { title = 'Metal Detecting', message = message, type = type_ or 'info' })
 end
 
-local function cooldownForLevel(level)
+local function cooldownForLevel(level, maxLevel)
     level = tonumber(level) or 1
-    if Config.Skill.cooldownByLevel[level] then return Config.Skill.cooldownByLevel[level] end
-    local highestConfigured = 1
-    for configuredLevel in pairs(Config.Skill.cooldownByLevel) do
-        if configuredLevel > highestConfigured and configuredLevel <= level then highestConfigured = configuredLevel end
-    end
-    return math.max(Config.Skill.minimumCooldown, Config.Skill.cooldownByLevel[highestConfigured] or Config.Skill.minimumCooldown)
+    maxLevel = tonumber(maxLevel) or 99
+    local atLevel1, atMaxLevel = Config.Skill.cooldown.atLevel1, Config.Skill.cooldown.atMaxLevel
+    if maxLevel <= 1 then return atLevel1 end
+
+    level = math.max(1, math.min(maxLevel, level))
+    local ratio = (level - 1) / (maxLevel - 1)
+    local seconds = atLevel1 - (atLevel1 - atMaxLevel) * ratio
+    return math.floor(seconds * 10 + 0.5) / 10
 end
 
 local function skillData(src)
     local data, err = exports.qbskills:getRep(src, Config.Skill.name)
     if not data then
-        print(('[md-metaldetecting] could not read %s skill for %s: %s'):format(Config.Skill.name, src, tostring(err)))
+        print(('[qbmetaldetecting] could not read %s skill for %s: %s'):format(Config.Skill.name, src, tostring(err)))
         return nil
     end
     return data
@@ -47,11 +46,9 @@ end
 
 local function clearPlayer(src, tellClient)
     activeDetectors[src] = nil
-    pendingFinds[src] = nil
-    pendingWashes[src] = nil
     cooldowns[src] = nil
     delayBySource[src] = nil
-    if tellClient then QB.events.push(src, 'md-metaldetecting:client:stoppedDetecting') end
+    if tellClient then QB.events.push(src, 'qbmetaldetecting:client:stoppedDetecting') end
 end
 
 local function stopDetector(src)
@@ -59,47 +56,22 @@ local function stopDetector(src)
     clearPlayer(src, true)
 end
 
-local function issueDetectionAuthorization(src, ground)
-    if not activeDetectors[src] then return nil, 'detector is not active' end
-    if not isAllowedGround(ground) then return nil, 'the ground is unsuitable' end
-    if not playerHas(src, Config.Items.detector) then return nil, 'you no longer have a metal detector' end
-    if pendingFinds[src] then return nil, 'a find is already being processed' end
-    if (cooldowns[src] or 0) > GetGameTimer() then return nil, 'the detector is still charging' end
-
-    local authorization = QB.minigames.authorizeSkillCheck(src, Config.Skill.name, 'skillbar', Config.Detection.minigame)
-    pendingFinds[src] = { ground = ground, authorization = authorization }
-    return { authorization = authorization }
+local function eligibleLoot(level, wash)
+    local eligible = {}
+    for _, entry in ipairs(Config.Loot.items) do
+        if level >= entry.level and not (wash and entry.item == Config.Items.clump) then
+            eligible[#eligible + 1] = entry
+        end
+    end
+    return eligible
 end
 
-local function chooseLoot(wash)
-    local pool = Config.Loot.common
-    if math.random(1, 100) <= (wash and math.floor(Config.Loot.rareChance / 2) or Config.Loot.rareChance) then
-        pool = Config.Loot.rare
-    end
-
-    local item
-    repeat
-        item = pool[math.random(1, #pool)]
-    until not wash or item ~= Config.Items.clump
-    return item
-end
-
-for name, definition in pairs(Config.Items.definitions) do
-    if not Core:getShared('items', name) then
-        local item = {
-            name = name,
-            label = definition.label,
-            weight = definition.weight,
-            type = 'item',
-            image = definition.image,
-            unique = false,
-            useable = name == Config.Items.detector,
-            shouldClose = name == Config.Items.detector,
-            description = definition.description,
-        }
-        local ok, err = Core:registerShared('items', name, item)
-        assert(ok, ('failed to register item %s: %s'):format(name, tostring(err)))
-    end
+local function chooseLoot(level, wash)
+    level = tonumber(level) or 1
+    local eligible = eligibleLoot(level, wash)
+    if #eligible == 0 then eligible = eligibleLoot(level, false) end
+    if #eligible == 0 then return { item = Config.Items.clump, level = 1, xp = 1 } end
+    return eligible[math.random(1, #eligible)]
 end
 
 Core:createUseable(Config.Items.detector, function(src)
@@ -115,60 +87,43 @@ Core:createUseable(Config.Items.detector, function(src)
     delayBySource[src] = true
     SetTimeout(2000, function() delayBySource[src] = nil end)
     activeDetectors[src] = true
-    cooldowns[src] = GetGameTimer() + cooldownForLevel(skill.level) * 1000
-    QB.events.push(src, 'md-metaldetecting:client:startedDetecting', cooldownForLevel(skill.level))
+    local startCooldown = cooldownForLevel(skill.level, skill.maxLevel)
+    cooldowns[src] = GetGameTimer() + startCooldown * 1000
+    QB.events.push(src, 'qbmetaldetecting:client:startedDetecting', startCooldown)
 end)
 
-QB.callback.register('md-metaldetecting:server:beginFind', function(src, ground)
-    return issueDetectionAuthorization(src, ground)
-end, { rateLimit = { max = 4, window = 10000 } })
-
-QB.events.register('md-metaldetecting:server:stoppedDetecting', function(src)
+QB.events.register('qbmetaldetecting:server:stoppedDetecting', function(src)
     stopDetector(src)
 end, { rateLimit = { max = 3, window = 5000 } })
 
-QB.events.register('md-metaldetecting:server:cancelledFind', function(src, authorization)
-    local pending = pendingFinds[src]
-    if pending and pending.authorization == authorization then pendingFinds[src] = nil end
-end, { rateLimit = { max = 5, window = 10000 } })
-
-QB.events.register('md-metaldetecting:server:completedFind', function(src, proof, authorization)
-    local pending = pendingFinds[src]
-    pendingFinds[src] = nil
-    if not pending or pending.authorization ~= authorization then return end
-    if not activeDetectors[src] or not isAllowedGround(pending.ground) then return end
+QB.events.register('qbmetaldetecting:server:completedFind', function(src, ground)
+    if not activeDetectors[src] or not isAllowedGround(ground) then return end
     if (cooldowns[src] or 0) > GetGameTimer() or not playerHas(src, Config.Items.detector) then return end
-    if not QB.minigames.consumeProof(src, proof, 'skillbar', authorization) then return end
 
-    local item = chooseLoot(false)
-    local added, addErr = Core:addItem(src, item, 1, nil, nil, 'metal detecting')
+    local before = skillData(src)
+    if not before then return end
+
+    local find = chooseLoot(before.level, false)
+    local added, addErr = Core:addItem(src, find.item, 1, nil, nil, 'metal detecting')
     if not added then
         notify(src, addErr or 'You do not have room for that find.', 'error')
         return
     end
 
-    local before = skillData(src)
-    local awarded, awardErr = exports.qbskills:addRep(src, Config.Skill.name, Config.Skill.xpPerFind, GetEntityCoords(GetPlayerPed(src)), Config.Detection.distance)
+    local awarded, awardErr = exports.qbskills:addRep(src, Config.Skill.name, find.xp)
     if not awarded then
-        print(('[md-metaldetecting] failed to award skill XP to %s: %s'):format(src, tostring(awardErr)))
+        print(('[qbmetaldetecting] failed to award skill XP to %s: %s'):format(src, tostring(awardErr)))
     end
 
-    local after = skillData(src)
-    local cooldown = cooldownForLevel(after and after.level or before and before.level)
-    cooldowns[src] = GetGameTimer() + cooldown * 1000
-    if before and after and after.level > before.level then
+    local after = skillData(src) or before
+    cooldowns[src] = GetGameTimer() + cooldownForLevel(after.level, after.maxLevel) * 1000
+    if after.level > before.level then
         notify(src, ('Metal detecting level %d reached.'):format(after.level), 'success')
     end
-    QB.events.push(src, 'md-metaldetecting:client:foundLoot', item)
+    QB.events.push(src, 'qbmetaldetecting:client:foundLoot', find.item)
 end, { rateLimit = { max = 4, window = 10000 } })
 
-QB.callback.register('md-metaldetecting:server:sellingOptionsRequested', function(src, shopIndex)
-    local shop = Config.Selling.shop[shopIndex]
-    if not shop or not near(src, shop.coords, Config.Selling.interactionDistance) then return false end
-    return Config.Loot.sellValues
-end, { rateLimit = { max = 5, window = 10000 } })
-
-QB.events.register('md-metaldetecting:server:purchasedDetector', function(src, shopIndex, account)
+QB.events.register('qbmetaldetecting:server:purchasedDetector', function(src, shopIndex, account)
     local shop = Config.Selling.shop[shopIndex]
     if not shop or (account ~= 'cash' and account ~= 'bank') then return end
     if not near(src, shop.coords, Config.Selling.interactionDistance) then return end
@@ -185,85 +140,44 @@ QB.events.register('md-metaldetecting:server:purchasedDetector', function(src, s
     notify(src, 'Metal detector purchased.', 'success')
 end, { rateLimit = { max = 2, window = 5000 } })
 
-QB.events.register('md-metaldetecting:server:soldLoot', function(src, shopIndex, item)
+QB.events.register('qbmetaldetecting:server:soldLoot', function(src, shopIndex, item, amount)
     local shop = Config.Selling.shop[shopIndex]
     local price = Config.Loot.sellValues[item]
-    if not shop or (item ~= 'all' and not price) or not near(src, shop.coords, Config.Selling.interactionDistance) then return end
+    if not shop or not price or not near(src, shop.coords, Config.Selling.interactionDistance) then return end
 
-    local amount = item == 'all' and nil or Core:getItemCount(src, item)
-    if item ~= 'all' and (not amount or amount < 1) then
-        notify(src, ('You do not have any %s.'):format(item), 'error')
+    amount = math.floor(tonumber(amount) or 0)
+    local owned = Core:getItemCount(src, item) or 0
+    if amount < 1 or amount > owned then
+        notify(src, ('You do not have %d x %s.'):format(amount, item), 'error')
         return
     end
 
-    local total, sold = 0, 0
-    if item == 'all' then
-        for sellItem, sellPrice in pairs(Config.Loot.sellValues) do
-            local count = Core:getItemCount(src, sellItem)
-            if count > 0 and Core:removeItem(src, sellItem, count, nil, 'metal detecting sale') then
-                sold = sold + count
-                total = total + count * sellPrice
-            end
-        end
-    elseif Core:removeItem(src, item, amount, nil, 'metal detecting sale') then
-        sold = amount
-        total = amount * price
-    end
+    if not Core:removeItem(src, item, amount, nil, 'metal detecting sale') then return end
 
-    if sold > 0 then
-        Core:addMoney(src, 'cash', total, 'metal detecting sale')
-        notify(src, ('Sold %d item(s) for $%d.'):format(sold, total), 'success')
-    end
-end, { rateLimit = { max = 4, window = 5000 } })
+    local total = amount * price
+    Core:addMoney(src, 'cash', total, 'metal detecting sale')
+    notify(src, ('Sold %d item(s) for $%d.'):format(amount, total), 'success')
+end, { rateLimit = { max = 8, window = 5000 } })
 
-local function issueWashAuthorization(src, washIndex)
+QB.events.register('qbmetaldetecting:server:washedClump', function(src, washIndex)
     local wash = Config.Selling.wash[washIndex]
-    if not wash or not near(src, wash.coords, Config.Selling.interactionDistance) then return nil end
-    if not playerHas(src, Config.Items.clump) or pendingWashes[src] then return nil end
-    local authorization = QB.minigames.authorizeSkillCheck(src, Config.Skill.name, 'skillbar', Config.Detection.minigame)
-    pendingWashes[src] = { washIndex = washIndex, authorization = authorization }
-    return authorization
-end
-
-QB.callback.register('md-metaldetecting:server:beginWash', issueWashAuthorization, { rateLimit = { max = 4, window = 10000 } })
-
-QB.events.register('md-metaldetecting:server:cancelledWash', function(src, authorization)
-    local pending = pendingWashes[src]
-    if pending and pending.authorization == authorization then pendingWashes[src] = nil end
-end, { rateLimit = { max = 5, window = 10000 } })
-
-QB.events.register('md-metaldetecting:server:washedClump', function(src, proof, authorization)
-    local pending = pendingWashes[src]
-    pendingWashes[src] = nil
-    if not pending or pending.authorization ~= authorization then return end
-    local wash = Config.Selling.wash[pending.washIndex]
     if not wash or not near(src, wash.coords, Config.Selling.interactionDistance) then return end
     if not playerHas(src, Config.Items.clump) then
         notify(src, 'You do not have a clump to wash.', 'error')
         return
     end
-    if not QB.minigames.consumeProof(src, proof, 'skillbar', authorization) then return end
     if not Core:removeItem(src, Config.Items.clump, 1, nil, 'washed metal detecting clump') then return end
 
-    local item = chooseLoot(true)
-    local added, addErr = Core:addItem(src, item, 1, nil, nil, 'washed metal detecting clump')
+    local skill = skillData(src)
+    local find = chooseLoot(skill and skill.level or 1, true)
+    local added, addErr = Core:addItem(src, find.item, 1, nil, nil, 'washed metal detecting clump')
     if not added then
         Core:addItem(src, Config.Items.clump, 1, nil, nil, 'failed clump wash refund')
         notify(src, addErr or 'You do not have room for that find.', 'error')
         return
     end
-    notify(src, ('You washed the clump and found %s.'):format(item), 'success')
+    notify(src, ('You washed the clump and found %s.'):format(find.item), 'success')
 end, { rateLimit = { max = 4, window = 10000 } })
-
-QB.commands.add('metaldetectLevel', 'Show your metal detecting skill', nil, false, function(src)
-    local skill = skillData(src)
-    if skill then notify(src, ('Metal detecting level %d — %d XP.'):format(skill.level, skill.xp), 'info') end
-end)
-
-QB.commands.add('resetMetaldetector', 'Stop metal detecting', nil, false, function(src)
-    stopDetector(src)
-    notify(src, 'Metal detecting stopped.', 'success')
-end)
 
 AddEventHandler('QBCore:Server:OnPlayerUnload', function(src) clearPlayer(src, false) end)
 AddEventHandler('qbcore:server:playerDropped', function(src) clearPlayer(src, false) end)

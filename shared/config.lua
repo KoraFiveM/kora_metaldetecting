@@ -2,39 +2,17 @@ Config = {
     Items = {
         detector = 'metaldetector',
         clump = 'clump',
-
-        -- Registered through qbcore's live shared-item registry on the server.
-        definitions = {
-            metalscrap = { label = 'Metal Scrap', weight = 100, image = 'metalscrap.png', description = 'You can probably make something nice out of this.' },
-            copper = { label = 'Copper', weight = 100, image = 'copper.png', description = 'A useful piece of copper.' },
-            aluminum = { label = 'Aluminium', weight = 100, image = 'aluminum.png', description = 'A useful piece of aluminium.' },
-            iron = { label = 'Iron', weight = 100, image = 'iron.png', description = 'A handy piece of iron.' },
-            steel = { label = 'Steel', weight = 100, image = 'steel.png', description = 'A useful piece of steel.' },
-            ['1792coin'] = { label = '1792 Coin', weight = 100, image = '1792coin.png', description = 'Even older.' },
-            ['1797coin'] = { label = '1797 Coin', weight = 100, image = '1797coin.png', description = "That's old." },
-            bobbypin = { label = 'Bobby Pin', weight = 100, image = 'bobbypin.png', description = 'Put your hair up.' },
-            bottlecap = { label = 'Bottle Cap', weight = 100, image = 'bottlecap.png', description = 'Stepped on a pop top.' },
-            clump = { label = 'Clump', weight = 100, image = 'clump.png', description = 'Not a turd.' },
-            corno = { label = 'Corno', weight = 100, image = 'corno.png', description = 'A curious find.' },
-            diamondring = { label = 'Diamond Ring', weight = 100, image = 'diamondring.png', description = 'Pretty sure some poor kid made this.' },
-            goldbracelet = { label = 'Gold Bracelet', weight = 100, image = 'goldbracelet.png', description = 'Is this bracelet real gold?' },
-            golddiamondring = { label = 'Gold Diamond Ring', weight = 100, image = 'golddiamondring.png', description = "It's a gold ring with a diamond?" },
-            goldring = { label = 'Golden Ring', weight = 100, image = 'goldring.png', description = 'My precious.' },
-            rubyring = { label = 'Ruby Ring', weight = 100, image = 'rubyring.png', description = 'It is a ruby, not a rubix.' },
-            toycar = { label = 'Toy Car', weight = 100, image = 'toycar.png', description = "Don't put it in odd places." },
-            metaldetector = { label = 'Metal Detector', weight = 2500, image = 'metaldetector.png', description = 'Maybe it can find things.' },
-        },
     },
 
     Detection = {
         showText = true,
         detectorModel = 'bostra_detector',
-        digDuration = 8000,
+        digDuration = 7000,
         distance = 5.0,
         minigame = {
             attempts = 2,
-            zoneSize = 0.14,
-            speed = 1.0,
+            zoneSize = 0.24,
+            speed = 0.5,
             timeLimit = 10000,
         },
         allowedGrounds = {
@@ -47,34 +25,54 @@ Config = {
 
     Skill = {
         name = 'metaldetecting',
-        xpPerFind = 1,
-        -- qbskills levels start at 1. This keeps the original 55-to-5 second
-        -- progression while allowing qbskills to retain its full level curve.
-        cooldownByLevel = {
-            [1] = 55, [2] = 50, [3] = 45, [4] = 40, [5] = 35,
-            [6] = 30, [7] = 25, [8] = 20, [9] = 15, [10] = 10,
-            [11] = 5,
+        cooldown = {
+            atLevel1 = 55,
+            atMaxLevel = 5,
         },
-        minimumCooldown = 5,
     },
 
     Loot = {
-        rareChance = 10,
-        rare = {
-            '1792coin', '1797coin', 'diamondring', 'goldbracelet',
-            'golddiamondring', 'rubyring', 'steel', 'metalscrap',
-            'iron', 'copper',
+        items = {
+            { item = 'clump',                level = 1, xp = 10 },
+            { item = 'metalscrap',          level = 1,  xp = 17 },
+            { item = 'copper',              level = 1,  xp = 17 },
+            { item = 'aluminum',            level = 10, xp = 35 },
+            { item = 'iron',                level = 20, xp = 45 },
+            { item = 'bobby_pin',            level = 25, xp = 50 },
+            { item = 'bottle_cap',           level = 30, xp = 50 },
+            { item = 'nails',                level = 35, xp = 75 },
+            { item = 'toy_car',              level = 40, xp = 143 },
+            { item = 'corno',                level = 45, xp = 176 },
+            { item = 'car_keys_md',          level = 50, xp = 300 },
+            { item = 'steel',                level = 55, xp = 460 },
+            { item = 'silver_ring_md',       level = 60, xp = 550 },
+            { item = 'gold_ring_md',         level = 60, xp = 600 },
+            { item = 'gold_chain_md',        level = 65, xp = 850 },
+            { item = 'gold_bracelet_md',     level = 70, xp = 1400 },
+            { item = 'diamond_earring_md',   level = 70, xp = 1500 },
+            { item = 'diamond_ring_md',      level = 70, xp = 1680 },
+            { item = 'gold_diamond_ring_md', level = 75, xp = 3300 },
+            { item = 'antique_coin',          level = 80, xp = 5000 },
+            { item = 'ruby_ring_md',          level = 85, xp = 9000 },
         },
-        common = {
-            'bobbypin', 'clump', 'clump', 'clump', 'bottlecap', 'corno',
-            'toycar', 'goldring', 'steel', 'metalscrap', 'iron', 'copper',
-        },
-        sellValues = {
-            bobbypin = 25, bottlecap = 25, corno = 25, toycar = 25,
-            goldring = 25, ['1792coin'] = 25, ['1797coin'] = 25,
-            diamondring = 25, golddiamondring = 25, goldbracelet = 25,
-            rubyring = 25,
-        },
+       sellValues = {
+            clump = 10,
+            bobby_pin = 25,
+            bottle_cap = 20,
+            nails = 30,
+            toy_car = 50,
+            corno = 60,
+            car_keys_md = 100,
+            silver_ring_md = 100,
+            gold_ring_md = 125,
+            gold_chain_md = 150,
+            gold_bracelet_md = 175,
+            diamond_earring_md = 200,
+            diamond_ring_md = 225,
+            gold_diamond_ring_md = 250,
+            antique_coin = 275,
+            ruby_ring_md = 300,
+        }
     },
 
     Selling = {
@@ -94,5 +92,18 @@ Config = {
         },
     },
 }
+
+for index, entry in ipairs(Config.Loot.items) do
+    assert(type(entry.level) == 'number' and entry.level >= 1 and entry.level % 1 == 0,
+        ('qbmetaldetecting Config.Loot.items[%d] (%s) level must be a positive integer.'):format(index, tostring(entry.item)))
+    assert(type(entry.xp) == 'number' and entry.xp > 0,
+        ('qbmetaldetecting Config.Loot.items[%d] (%s) xp must be a positive number.'):format(index, tostring(entry.item)))
+end
+
+assert(type(Config.Skill.cooldown) == 'table'
+    and type(Config.Skill.cooldown.atLevel1) == 'number' and Config.Skill.cooldown.atLevel1 > 0
+    and type(Config.Skill.cooldown.atMaxLevel) == 'number' and Config.Skill.cooldown.atMaxLevel > 0
+    and Config.Skill.cooldown.atMaxLevel <= Config.Skill.cooldown.atLevel1,
+    'qbmetaldetecting Config.Skill.cooldown must define a positive atLevel1 >= atMaxLevel, in seconds.')
 
 if QB and QB.config and QB.config.adopt then Config = QB.config.adopt(Config) end

@@ -2,7 +2,7 @@ fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
 
-name 'md-metaldetecting'
+name 'qbmetaldetecting'
 author 'qbcore2'
 version '3.0.0'
 description 'QB metal detecting with qblib minigames and qbskills progression'
@@ -25,6 +25,8 @@ server_scripts {
 
 client_scripts {
     'client/main.lua',
+    'client/catalog.lua',
+    'client/shop.lua',
 }
 
 files {
