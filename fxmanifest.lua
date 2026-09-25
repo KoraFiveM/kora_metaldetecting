@@ -30,8 +30,6 @@ client_scripts {
 }
 
 files {
-    'stream/bostra_detector.ytyp',
     'items/images/*.png',
 }
 
-data_file 'DLC_ITYP_REQUEST' 'stream/bostra_detector.ytyp'
