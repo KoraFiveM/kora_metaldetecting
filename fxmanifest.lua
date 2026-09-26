@@ -29,7 +29,3 @@ client_scripts {
     'client/shop.lua',
 }
 
-files {
-    'items/images/*.png',
-}
-
