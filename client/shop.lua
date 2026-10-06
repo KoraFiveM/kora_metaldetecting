@@ -71,7 +71,7 @@ end
 local function buildSellItems()
     local items = {}
     for _, entry in ipairs(sellableItems()) do
-        local owned = exports['qb-core']:HasItem(entry.item)
+        local owned = exports.qbinventory:HasItem(entry.item)
         local definition = itemDef(entry.item)
         local label = definition and definition.label or entry.item
         if owned then
