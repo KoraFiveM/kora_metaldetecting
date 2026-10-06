@@ -8,7 +8,8 @@ version '3.0.0'
 description 'QB metal detecting with qblib minigames and qbskills progression'
 
 dependencies {
-    'qb-core',
+    'qbcore',
+    'qbinventory',
     'qblib',
     'qbskills',
 }

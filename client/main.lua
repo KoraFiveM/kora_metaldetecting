@@ -153,7 +153,7 @@ local function beginDetecting(cooldown)
 end
 
 local function washClump(washIndex)
-    if not exports['qb-core']:HasItem(Config.Items.clump) then
+    if not exports.qbinventory:HasItem(Config.Items.clump) then
         notify('You need a clump to wash.', 'error')
         return
     end
