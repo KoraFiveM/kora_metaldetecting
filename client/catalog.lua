@@ -1,5 +1,5 @@
 
-local IMAGE_BASE = 'nui://qbinventory/images/'
+local IMAGE_BASE = 'nui://kora_inventory/images/'
 local appId = 'qbmetaldetecting:catalog'
 local inited = false
 
@@ -10,14 +10,14 @@ RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
 end)
 
 local function itemDef(name)
-    return exports.qbcore:getShared('items', name)
+    return exports.kora_core:getShared('items', name)
 end
 
 local function currentSkill()
     if not inited then
         return 1, 99
     end
-    local rep = exports.qbskills:getRep(Config.Skill.name) or {}
+    local rep = exports.kora_skills:getRep(Config.Skill.name) or {}
     return rep.level or 1, rep.maxLevel or 99
 end
 

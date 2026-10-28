@@ -153,7 +153,7 @@ local function beginDetecting(cooldown)
 end
 
 local function washClump(washIndex)
-    if not exports.qbinventory:HasItem(Config.Items.clump) then
+    if not exports.kora_inventory:HasItem(Config.Items.clump) then
         notify('You need a clump to wash.', 'error')
         return
     end
@@ -201,7 +201,7 @@ end
 QB.events.onPush('qbmetaldetecting:client:startedDetecting', beginDetecting)
 QB.events.onPush('qbmetaldetecting:client:stoppedDetecting', function() stopDetecting(false) end)
 QB.events.onPush('qbmetaldetecting:client:foundLoot', function(item)
-    local definition = exports.qbcore:getShared('items', item)
+    local definition = exports.kora_core:getShared('items', item)
     notify(('You found %s.'):format(definition and definition.label or item), 'success')
 end)
 
