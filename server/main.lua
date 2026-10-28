@@ -1,4 +1,4 @@
-local Core = exports.qbcore
+local Core = exports.kora_core
 local activeDetectors = {}
 local cooldowns = {}
 local delayBySource = {}
@@ -36,7 +36,7 @@ local function cooldownForLevel(level, maxLevel)
 end
 
 local function skillData(src)
-    local data, err = exports.qbskills:getRep(src, Config.Skill.name)
+    local data, err = exports.kora_skills:getRep(src, Config.Skill.name)
     if not data then
         print(('[qbmetaldetecting] could not read %s skill for %s: %s'):format(Config.Skill.name, src, tostring(err)))
         return nil
@@ -110,7 +110,7 @@ QB.events.register('qbmetaldetecting:server:completedFind', function(src, ground
         return
     end
 
-    local awarded, awardErr = exports.qbskills:addRep(src, Config.Skill.name, find.xp)
+    local awarded, awardErr = exports.kora_skills:addRep(src, Config.Skill.name, find.xp)
     if not awarded then
         print(('[qbmetaldetecting] failed to award skill XP to %s: %s'):format(src, tostring(awardErr)))
     end

@@ -1,4 +1,4 @@
-local IMAGE_BASE = 'nui://qbinventory/images/'
+local IMAGE_BASE = 'nui://kora_inventory/images/'
 local appId = 'qbmetaldetecting:shop'
 local defaultView = 'buy'
 
@@ -7,7 +7,7 @@ local function notify(message, type_)
 end
 
 local function itemDef(name)
-    return exports.qbcore:getShared('items', name)
+    return exports.kora_core:getShared('items', name)
 end
 
 local function itemImage(definition)
@@ -71,7 +71,7 @@ end
 local function buildSellItems()
     local items = {}
     for _, entry in ipairs(sellableItems()) do
-        local owned = exports.qbinventory:HasItem(entry.item)
+        local owned = exports.kora_inventory:HasItem(entry.item)
         local definition = itemDef(entry.item)
         local label = definition and definition.label or entry.item
         if owned then
@@ -183,7 +183,7 @@ end)
 for index, shop in ipairs(Config.Selling.shop) do
     local ped = QB.entities.create(shop.ped, shop.coords, { preset = 'static' })
     if ped then TaskStartScenarioInPlace(ped, 'WORLD_HUMAN_STAND_IMPATIENT', 0, true) end
-    exports.qbtarget:addEntity(ped, {
+    exports.kora_target:addEntity(ped, {
             { label = 'Open Metal Detector Shop', icon = 'Store', onSelect = function() OpenMetalDetectingShop(index) end },
     })
 end
