@@ -3,7 +3,7 @@ local appId = 'qbmetaldetecting:shop'
 local defaultView = 'buy'
 
 local function notify(message, type_)
-    QB.notify.send({ title = 'Metal Detecting', message = message, type = type_ or 'info' })
+    Kora.notify.send({ title = 'Metal Detecting', message = message, type = type_ or 'info' })
 end
 
 local function itemDef(name)
@@ -131,7 +131,7 @@ local function buildNavigation()
     return { buildBuyView(), buildSellView() }
 end
 
-QB.nui.registerApp({
+Kora.nui.registerApp({
     id = appId,
     title = 'Metal Detector Shop',
     icon = 'Search',
@@ -150,7 +150,7 @@ QB.nui.registerApp({
 
         if actionId == 'buy-cash' or actionId == 'buy-card' then
             local account = actionId == 'buy-cash' and 'cash' or 'bank'
-            QB.events.trigger('qbmetaldetecting:server:purchasedDetector', shopIndex, account)
+            Kora.events.trigger('qbmetaldetecting:server:purchasedDetector', shopIndex, account)
             return { close = true }
         end
 
@@ -159,7 +159,7 @@ QB.nui.registerApp({
             local amount = math.floor(tonumber(context.value and context.value.amount) or 0)
             if not item or amount < 1 then return end
 
-            QB.events.trigger('qbmetaldetecting:server:soldLoot', shopIndex, item, amount)
+            Kora.events.trigger('qbmetaldetecting:server:soldLoot', shopIndex, item, amount)
             return {
                 update = { navigation = { buildBuyView(), buildSellView() } },
                 notice = { tone = 'success', message = ('Selling %d x %s...'):format(amount, item) },
@@ -169,19 +169,19 @@ QB.nui.registerApp({
 })
 
 function OpenMetalDetectingShop(shopIndex)
-    if QB.nui.isAppOpen(appId) then return end
+    if Kora.nui.isAppOpen(appId) then return end
 
-    QB.nui.updateApp(appId, { navigation = buildNavigation() })
-    QB.nui.openApp(appId, { data = { shopIndex = shopIndex } })
+    Kora.nui.updateApp(appId, { navigation = buildNavigation() })
+    Kora.nui.openApp(appId, { data = { shopIndex = shopIndex } })
 end
 
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
-    if QB.nui.isAppOpen(appId) then QB.nui.closeApp(appId) end
+    if Kora.nui.isAppOpen(appId) then Kora.nui.closeApp(appId) end
 end)
 
 
 for index, shop in ipairs(Config.Selling.shop) do
-    local ped = QB.entities.create(shop.ped, shop.coords, { preset = 'static' })
+    local ped = Kora.entities.create(shop.ped, shop.coords, { preset = 'static' })
     if ped then TaskStartScenarioInPlace(ped, 'WORLD_HUMAN_STAND_IMPATIENT', 0, true) end
     exports.kora_target:addEntity(ped, {
             { label = 'Open Metal Detector Shop', icon = 'Store', onSelect = function() OpenMetalDetectingShop(index) end },

@@ -7,7 +7,7 @@ name 'kora_metaldetecting'
 provide 'qbmetaldetecting'
 author 'qbcore2'
 version '3.0.0'
-description 'QB metal detecting with kora_lib minigames and qbskills progression'
+description 'Kora metal detecting with kora_lib minigames and qbskills progression'
 
 dependencies {
     'kora_core',

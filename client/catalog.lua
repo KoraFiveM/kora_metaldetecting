@@ -4,8 +4,8 @@ local appId = 'qbmetaldetecting:catalog'
 local inited = false
 
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
-    if QB.nui.isAppOpen(appId) then
-        QB.nui.closeApp(appId)
+    if Kora.nui.isAppOpen(appId) then
+        Kora.nui.closeApp(appId)
     end
 end)
 
@@ -94,7 +94,7 @@ local function buildNavigation()
     return { buildDetectorView(level, maxLevel) }
 end
 
-QB.nui.registerApp({
+Kora.nui.registerApp({
     id = appId,
     title = 'Metal Detecting Catalog',
     description = 'Finds and sell prices unlocked at your current metal detecting level.',
@@ -107,10 +107,10 @@ QB.nui.registerApp({
 })
 
 local function openMetalDetectingCatalog()
-    if QB.nui.isAppOpen(appId) then return end
+    if Kora.nui.isAppOpen(appId) then return end
 
-    QB.nui.updateApp(appId, { navigation = buildNavigation() })
-    QB.nui.openApp(appId)
+    Kora.nui.updateApp(appId, { navigation = buildNavigation() })
+    Kora.nui.openApp(appId)
 end
 
 RegisterCommand('metaldetectcatalog', function()

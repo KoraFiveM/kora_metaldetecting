@@ -106,4 +106,4 @@ assert(type(Config.Skill.cooldown) == 'table'
     and Config.Skill.cooldown.atMaxLevel <= Config.Skill.cooldown.atLevel1,
     'qbmetaldetecting Config.Skill.cooldown must define a positive atLevel1 >= atMaxLevel, in seconds.')
 
-if QB and QB.config and QB.config.adopt then Config = QB.config.adopt(Config) end
+if Kora and Kora.config and Kora.config.adopt then Config = Kora.config.adopt(Config) end

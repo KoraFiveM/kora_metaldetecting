@@ -16,11 +16,11 @@ local function playerHas(src, item, amount)
 end
 
 local function near(src, coords, distance)
-    return QB.distance.player(src, coords, distance or Config.Detection.distance)
+    return Kora.distance.player(src, coords, distance or Config.Detection.distance)
 end
 
 local function notify(src, message, type_)
-    QB.notify.send(src, { title = 'Metal Detecting', message = message, type = type_ or 'info' })
+    Kora.notify.send(src, { title = 'Metal Detecting', message = message, type = type_ or 'info' })
 end
 
 local function cooldownForLevel(level, maxLevel)
@@ -48,7 +48,7 @@ local function clearPlayer(src, tellClient)
     activeDetectors[src] = nil
     cooldowns[src] = nil
     delayBySource[src] = nil
-    if tellClient then QB.events.push(src, 'qbmetaldetecting:client:stoppedDetecting') end
+    if tellClient then Kora.events.push(src, 'qbmetaldetecting:client:stoppedDetecting') end
 end
 
 local function stopDetector(src)
@@ -89,14 +89,14 @@ Core:createUseable(Config.Items.detector, function(src)
     activeDetectors[src] = true
     local startCooldown = cooldownForLevel(skill.level, skill.maxLevel)
     cooldowns[src] = GetGameTimer() + startCooldown * 1000
-    QB.events.push(src, 'qbmetaldetecting:client:startedDetecting', startCooldown)
+    Kora.events.push(src, 'qbmetaldetecting:client:startedDetecting', startCooldown)
 end)
 
-QB.events.register('qbmetaldetecting:server:stoppedDetecting', function(src)
+Kora.events.register('qbmetaldetecting:server:stoppedDetecting', function(src)
     stopDetector(src)
 end, { rateLimit = { max = 3, window = 5000 } })
 
-QB.events.register('qbmetaldetecting:server:completedFind', function(src, ground)
+Kora.events.register('qbmetaldetecting:server:completedFind', function(src, ground)
     if not activeDetectors[src] or not isAllowedGround(ground) then return end
     if (cooldowns[src] or 0) > GetGameTimer() or not playerHas(src, Config.Items.detector) then return end
 
@@ -120,10 +120,10 @@ QB.events.register('qbmetaldetecting:server:completedFind', function(src, ground
     if after.level > before.level then
         notify(src, ('Metal detecting level %d reached.'):format(after.level), 'success')
     end
-    QB.events.push(src, 'qbmetaldetecting:client:foundLoot', find.item)
+    Kora.events.push(src, 'qbmetaldetecting:client:foundLoot', find.item)
 end, { rateLimit = { max = 4, window = 10000 } })
 
-QB.events.register('qbmetaldetecting:server:purchasedDetector', function(src, shopIndex, account)
+Kora.events.register('qbmetaldetecting:server:purchasedDetector', function(src, shopIndex, account)
     local shop = Config.Selling.shop[shopIndex]
     if not shop or (account ~= 'cash' and account ~= 'bank') then return end
     if not near(src, shop.coords, Config.Selling.interactionDistance) then return end
@@ -140,7 +140,7 @@ QB.events.register('qbmetaldetecting:server:purchasedDetector', function(src, sh
     notify(src, 'Metal detector purchased.', 'success')
 end, { rateLimit = { max = 2, window = 5000 } })
 
-QB.events.register('qbmetaldetecting:server:soldLoot', function(src, shopIndex, item, amount)
+Kora.events.register('qbmetaldetecting:server:soldLoot', function(src, shopIndex, item, amount)
     local shop = Config.Selling.shop[shopIndex]
     local price = Config.Loot.sellValues[item]
     if not shop or not price or not near(src, shop.coords, Config.Selling.interactionDistance) then return end
@@ -159,7 +159,7 @@ QB.events.register('qbmetaldetecting:server:soldLoot', function(src, shopIndex, 
     notify(src, ('Sold %d item(s) for $%d.'):format(amount, total), 'success')
 end, { rateLimit = { max = 8, window = 5000 } })
 
-QB.events.register('qbmetaldetecting:server:washedClump', function(src, washIndex)
+Kora.events.register('qbmetaldetecting:server:washedClump', function(src, washIndex)
     local wash = Config.Selling.wash[washIndex]
     if not wash or not near(src, wash.coords, Config.Selling.interactionDistance) then return end
     if not playerHas(src, Config.Items.clump) then
