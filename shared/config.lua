@@ -80,7 +80,7 @@ Config = {
         interactionDistance = 5.0,
         shop = {
             {
-                coords = vector4(-1113.45, -1689.03, 4.38, 150.53),
+                coords = vector4(-1111.29, -1689.21, 3.38, 307.79),
                 ped = 'ig_priest',
                 blip = { sprite = 617, color = 5, scale = 0.7, name = 'Metal Detector Shop' },
             },
