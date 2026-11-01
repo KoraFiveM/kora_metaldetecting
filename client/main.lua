@@ -1,10 +1,8 @@
 local active = false
-local detecting = true
 local detectorProp
 local detectionText
 local detectionTextId
 local currentCooldownMs = 55000
-local shopsReady = false
 
 local function notify(message, type_)
     Kora.notify.send({ title = 'Metal Detecting', message = message, type = type_ or 'info' })
@@ -74,11 +72,8 @@ local function resumeDetectingLoop()
 end
 
 local function playFind(ground)
-    local startedAt = GetGameTimer()
     local result = Kora.minigames.play('skillbar', Config.Detection.minigame)
-    if not result or not result.success then
-        return
-    end
+    if not result or not result.success then return end
 
     local ped = PlayerPedId()
     Kora.anim.stop(ped)
@@ -87,9 +82,7 @@ local function playFind(ground)
     TaskStartScenarioInPlace(ped, 'WORLD_HUMAN_GARDENER_PLANT', 0, true)
     Wait(Config.Detection.digDuration / 2)
 
-    if not active then
-        return
-    end
+    if not active then return end
 
     ClearPedTasks(ped)
     Kora.events.trigger('qbmetaldetecting:server:completedFind', ground)
@@ -117,7 +110,6 @@ local function beginDetecting(cooldown)
     end
     Kora.anim.play(ped, 'anim@heists@narcotics@trash', 'walk', { flag = 51 })
     active = true
-    detecting = true
     currentCooldownMs = math.floor((tonumber(cooldown) or 55) * 1000)
 
     CreateThread(function()
@@ -133,9 +125,7 @@ local function beginDetecting(cooldown)
                 Wait(1000)
             until IsEntityDead(ped) or IsPedInAnyVehicle(ped, false) or not active or time <= 0
 
-            if not active then
-                return -- session was stopped elsewhere while we were scanning
-            end
+            if not active then return end
 
             if IsEntityDead(ped) or IsPedInAnyVehicle(ped, false) then
                 if IsPedInAnyVehicle(ped, false) then notify('Metal detecting stopped in a vehicle.', 'error') end
@@ -145,9 +135,7 @@ local function beginDetecting(cooldown)
 
             notify('You may have found something.', 'success')
             Wait(800)
-            detecting = false
             playFind(ground)
-            detecting = true
         end
     end)
 end
@@ -186,8 +174,6 @@ local function addBlip(location)
 end
 
 local function initLocations()
-   
-
     for index, wash in ipairs(Config.Selling.wash) do
         addBlip(wash)
         Kora.interact.addCircleZone(('md-metal-wash-%d'):format(index), wash.coords, 1.5, {

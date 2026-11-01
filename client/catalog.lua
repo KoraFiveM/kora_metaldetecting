@@ -1,4 +1,3 @@
-
 local IMAGE_BASE = 'nui://kora_inventory/images/'
 local appId = 'qbmetaldetecting:catalog'
 local inited = false
@@ -41,8 +40,8 @@ local function buildLootItems(level)
 
         local descriptionParts = {
             unlocked
-                and (('Unlocked at level %d'):format(entry.level))
-                or (('Locked - requires level %d'):format(entry.level)),
+                and ('Unlocked at level %d'):format(entry.level)
+                or ('Locked - requires level %d'):format(entry.level),
             ('%d XP per find'):format(entry.xp),
         }
         if sellPrice then
@@ -90,8 +89,7 @@ local function buildDetectorView(level, maxLevel)
 end
 
 local function buildNavigation()
-    local level, maxLevel = currentSkill()
-    return { buildDetectorView(level, maxLevel) }
+    return { buildDetectorView(currentSkill()) }
 end
 
 Kora.nui.registerApp({
