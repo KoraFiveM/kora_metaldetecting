@@ -97,7 +97,7 @@ local function buildSellItems()
                             required = true,
                         },
                     },
-                } or nil,
+                },
             }
         end
     end
@@ -161,7 +161,7 @@ Kora.nui.registerApp({
 
             Kora.events.trigger('qbmetaldetecting:server:soldLoot', shopIndex, item, amount)
             return {
-                update = { navigation = { buildBuyView(), buildSellView() } },
+                update = { navigation = buildNavigation() },
                 notice = { tone = 'success', message = ('Selling %d x %s...'):format(amount, item) },
             }
         end
@@ -179,11 +179,10 @@ RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
     if Kora.nui.isAppOpen(appId) then Kora.nui.closeApp(appId) end
 end)
 
-
 for index, shop in ipairs(Config.Selling.shop) do
     local ped = Kora.entities.create(shop.ped, shop.coords, { preset = 'static' })
     if ped then TaskStartScenarioInPlace(ped, 'WORLD_HUMAN_STAND_IMPATIENT', 0, true) end
     exports.kora_target:addEntity(ped, {
-            { label = 'Open Metal Detector Shop', icon = 'Store', onSelect = function() OpenMetalDetectingShop(index) end },
+        { label = 'Open Metal Detector Shop', icon = 'Store', onSelect = function() OpenMetalDetectingShop(index) end },
     })
 end
