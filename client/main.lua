@@ -101,6 +101,10 @@ local function beginDetecting(cooldown)
         return
     end
     local ped = PlayerPedId()
+    if IsEntityDead(ped) then
+        Kora.events.trigger('qbmetaldetecting:server:stoppedDetecting')
+        return
+    end
     detectorProp = Kora.entities.create(Config.Detection.detectorModel, GetEntityCoords(ped), {})
     AttachEntityToEntity(detectorProp, ped, GetPedBoneIndex(ped, 57005), 0.8, 0.06, 0.1, 5.0, -99.0, 56.0, true, true, false, true, 1, true)
     if not detectorProp then
@@ -123,15 +127,9 @@ local function beginDetecting(cooldown)
                 setDetectionText(valid)
                 if valid then time = time - 1000 end
                 Wait(1000)
-            until IsEntityDead(ped) or IsPedInAnyVehicle(ped, false) or not active or time <= 0
+            until not active or time <= 0
 
             if not active then return end
-
-            if IsEntityDead(ped) or IsPedInAnyVehicle(ped, false) then
-                if IsPedInAnyVehicle(ped, false) then notify('Metal detecting stopped in a vehicle.', 'error') end
-                stopDetecting(true)
-                return
-            end
 
             notify('You may have found something.', 'success')
             Wait(800)
@@ -139,6 +137,19 @@ local function beginDetecting(cooldown)
         end
     end)
 end
+
+-- Death / vehicle interrupts are edge-driven instead of being re-polled by the
+-- detection loop every second.
+Kora.cache.onChange('vehicle', function(vehicle)
+    if not active or not vehicle then return end
+    notify('Metal detecting stopped in a vehicle.', 'error')
+    stopDetecting(true)
+end)
+
+Kora.cache.onChange('isDead', function(dead)
+    if not active or not dead then return end
+    stopDetecting(true)
+end)
 
 local function washClump(washIndex)
     if not exports.kora_inventory:HasItem(Config.Items.clump) then
