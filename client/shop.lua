@@ -71,7 +71,9 @@ end
 local function buildSellItems()
     local items = {}
     for _, entry in ipairs(sellableItems()) do
-        local owned = exports.kora_inventory:HasItem(entry.item)
+        -- kora_inventory's client exports may not be ready at load; the list is rebuilt on shop open
+        local ok, owned = pcall(function() return exports.kora_inventory:HasItem(entry.item) end)
+        if not ok then owned = false end
         local definition = itemDef(entry.item)
         local label = definition and definition.label or entry.item
         if owned then
