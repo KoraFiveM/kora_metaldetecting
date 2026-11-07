@@ -72,8 +72,11 @@ local function resumeDetectingLoop()
 end
 
 local function playFind(ground)
-    local result = Kora.minigames.play('skillbar', Config.Detection.minigame)
-    if not result or not result.success then return end
+    local authorization = Kora.callback.trigger('qbmetaldetecting:server:beginFind', ground)
+    if not authorization then return end
+
+    local result = Kora.minigames.play('skillbar', nil, authorization)
+    if not result or not result.success or not result.proof then return end
 
     local ped = PlayerPedId()
     Kora.anim.stop(ped)
@@ -85,7 +88,7 @@ local function playFind(ground)
     if not active then return end
 
     ClearPedTasks(ped)
-    Kora.events.trigger('qbmetaldetecting:server:completedFind', ground)
+    Kora.events.trigger('qbmetaldetecting:server:completedFind', ground, result.proof, authorization)
     Wait(Config.Detection.digDuration)
     resumeDetectingLoop()
 end
@@ -157,8 +160,11 @@ local function washClump(washIndex)
         return
     end
 
-    local result = Kora.minigames.play('skillbar', Config.Detection.minigame)
-    if not result or not result.success then return end
+    local authorization = Kora.callback.trigger('qbmetaldetecting:server:beginWash', washIndex)
+    if not authorization then return end
+
+    local result = Kora.minigames.play('skillbar', nil, authorization)
+    if not result or not result.success or not result.proof then return end
 
     if not Kora.progressbar.start({
         label = 'Washing clump...',
@@ -170,7 +176,7 @@ local function washClump(washIndex)
         return
     end
 
-    Kora.events.trigger('qbmetaldetecting:server:washedClump', washIndex)
+    Kora.events.trigger('qbmetaldetecting:server:washedClump', washIndex, result.proof, authorization)
 end
 
 local function addBlip(location)

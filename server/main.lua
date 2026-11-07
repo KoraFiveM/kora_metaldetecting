@@ -2,6 +2,8 @@ local Core = exports.kora_core
 local activeDetectors = {}
 local cooldowns = {}
 local delayBySource = {}
+local pendingFinds = {}
+local pendingWashes = {}
 
 local function isAllowedGround(ground)
     if type(ground) ~= 'number' then return false end
@@ -48,6 +50,8 @@ local function clearPlayer(src, tellClient)
     activeDetectors[src] = nil
     cooldowns[src] = nil
     delayBySource[src] = nil
+    pendingFinds[src] = nil
+    pendingWashes[src] = nil
     if tellClient then Kora.events.push(src, 'qbmetaldetecting:client:stoppedDetecting') end
 end
 
@@ -96,9 +100,25 @@ Kora.events.register('qbmetaldetecting:server:stoppedDetecting', function(src)
     stopDetector(src)
 end, { rateLimit = { max = 3, window = 5000 } })
 
-Kora.events.register('qbmetaldetecting:server:completedFind', function(src, ground)
+-- The client only renders the skillbar; the server is the one that decides
+-- whether it was actually played and passed. Without this, a modified client
+-- could skip the minigame entirely and spam completedFind for free loot/XP.
+Kora.callback.register('qbmetaldetecting:server:beginFind', function(src, ground)
+    if not activeDetectors[src] or not isAllowedGround(ground) then return false end
+    if (cooldowns[src] or 0) > GetGameTimer() or not playerHas(src, Config.Items.detector) then return false end
+    if not skillData(src) then return false end
+
+    local authorization = Kora.minigames.authorizeSkillCheck(src, Config.Skill.name, 'skillbar', Config.Detection.minigame)
+    pendingFinds[src] = authorization
+    return authorization
+end, { rateLimit = { max = 4, window = 10000 } })
+
+Kora.events.register('qbmetaldetecting:server:completedFind', function(src, ground, proof, authorization)
     if not activeDetectors[src] or not isAllowedGround(ground) then return end
     if (cooldowns[src] or 0) > GetGameTimer() or not playerHas(src, Config.Items.detector) then return end
+    if type(proof) ~= 'string' or not authorization or pendingFinds[src] ~= authorization
+        or not Kora.minigames.consumeProof(src, proof, 'skillbar', authorization) then return end
+    pendingFinds[src] = nil
 
     local before = skillData(src)
     if not before then return end
@@ -159,13 +179,26 @@ Kora.events.register('qbmetaldetecting:server:soldLoot', function(src, shopIndex
     notify(src, ('Sold %d item(s) for $%d.'):format(amount, total), 'success')
 end, { rateLimit = { max = 8, window = 5000 } })
 
-Kora.events.register('qbmetaldetecting:server:washedClump', function(src, washIndex)
+Kora.callback.register('qbmetaldetecting:server:beginWash', function(src, washIndex)
+    local wash = Config.Selling.wash[washIndex]
+    if not wash or not near(src, wash.coords, Config.Selling.interactionDistance) then return false end
+    if not playerHas(src, Config.Items.clump) then return false end
+
+    local authorization = Kora.minigames.authorizeSkillCheck(src, Config.Skill.name, 'skillbar', Config.Detection.minigame)
+    pendingWashes[src] = authorization
+    return authorization
+end, { rateLimit = { max = 4, window = 10000 } })
+
+Kora.events.register('qbmetaldetecting:server:washedClump', function(src, washIndex, proof, authorization)
     local wash = Config.Selling.wash[washIndex]
     if not wash or not near(src, wash.coords, Config.Selling.interactionDistance) then return end
     if not playerHas(src, Config.Items.clump) then
         notify(src, 'You do not have a clump to wash.', 'error')
         return
     end
+    if type(proof) ~= 'string' or not authorization or pendingWashes[src] ~= authorization
+        or not Kora.minigames.consumeProof(src, proof, 'skillbar', authorization) then return end
+    pendingWashes[src] = nil
     if not Core:removeItem(src, Config.Items.clump, 1, nil, 'washed metal detecting clump') then return end
 
     local skill = skillData(src)
