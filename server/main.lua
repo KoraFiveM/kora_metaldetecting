@@ -212,5 +212,62 @@ Kora.events.register('qbmetaldetecting:server:washedClump', function(src, washIn
     notify(src, ('You washed the clump and found %s.'):format(find.item), 'success')
 end, { rateLimit = { max = 4, window = 10000 } })
 
+-- Shop peds: one networked ped per shop. The definition lives in an entity
+-- statebag (display data only), which OneSync replicates only to clients that
+-- have the ped in scope. Prices and permissions never travel in it.
+local SHOP_PED_KEY = 'kora_metaldetecting:shopPed'
+local shopPeds = {}
+local warnedShops = {}
+local resourceStopping = false
+
+local function spawnShopPed(index, shop)
+    local model = joaat(shop.ped)
+    local c = shop.coords
+    local ped = CreatePed(4, model, c.x, c.y, c.z + (tonumber(shop.zOffset) or 1.0), c.w, true, false)
+    local waited = 0
+    while ped ~= 0 and not DoesEntityExist(ped) and waited < 2000 do Wait(50) waited = waited + 50 end
+    if ped == 0 or not DoesEntityExist(ped) then
+        if not warnedShops[index] then
+            warnedShops[index] = true
+            print(('[qbmetaldetecting] shop ped %d (%s) could not be created; check Config.Selling.shop[%d].ped'):format(index, tostring(shop.ped), index))
+        end
+        return
+    end
+    FreezeEntityPosition(ped, true)
+    SetEntityInvincible(ped, true)
+    SetBlockingOfNonTemporaryEvents(ped, true)
+    shopPeds[index] = ped
+    local target = type(shop.target) == 'table' and shop.target or {}
+    Entity(ped).state:set(SHOP_PED_KEY, {
+        shopIndex = index,
+        model = shop.ped,
+        outfit = shop.outfit,
+        scenario = shop.scenario,
+        spawnDistance = tonumber(shop.spawnDistance) or 50.0,
+        target = { label = target.label or 'Open Metal Detector Shop', icon = target.icon or 'Store' },
+    }, true)
+end
+
+CreateThread(function()
+    while not resourceStopping do
+        for index, shop in ipairs(Config.Selling.shop) do
+            local ped = shopPeds[index]
+            if (not ped or not DoesEntityExist(ped)) and not warnedShops[index] then
+                spawnShopPed(index, shop)
+            end
+        end
+        Wait(5000)
+    end
+end)
+
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    resourceStopping = true
+    for index, ped in pairs(shopPeds) do
+        if DoesEntityExist(ped) then DeleteEntity(ped) end
+        shopPeds[index] = nil
+    end
+end)
+
 AddEventHandler('QBCore:Server:OnPlayerUnload', function(src) clearPlayer(src, false) end)
 AddEventHandler('qbcore:server:playerDropped', function(src) clearPlayer(src, false) end)

@@ -81,8 +81,17 @@ Config = {
         shop = {
             {
                 coords = vector4(-1111.29, -1689.21, 3.38, 307.79),
+                -- Ped model name (any valid ped model).
                 ped = 'ig_priest',
-                blip = { sprite = 617, color = 5, scale = 0.7, name = 'Metal Detector Shop' },
+                -- Optional outfit: { components = { [id] = { d = drawable, t = texture } }, props = { [id] = { d = drawable, t = texture } } }
+                outfit = nil,
+                scenario = 'WORLD_HUMAN_STAND_IMPATIENT',
+                -- Added to coords.z when the server creates the ped (ped origin sits above the ground).
+                zOffset = 1.0,
+                -- The ped definition is only sent to / used by players inside this radius.
+                spawnDistance = 50.0,
+                target = { label = 'Open Metal Detector Shop', icon = 'Store' },
+                blip = { sprite = 617, color = 5, scale = 0.7, name = 'Metal Detector Shop', shortRange = true, category = 'Other' },
             },
         },
         wash = {
@@ -98,6 +107,17 @@ for index, entry in ipairs(Config.Loot.items) do
         ('qbmetaldetecting Config.Loot.items[%d] (%s) level must be a positive integer.'):format(index, tostring(entry.item)))
     assert(type(entry.xp) == 'number' and entry.xp > 0,
         ('qbmetaldetecting Config.Loot.items[%d] (%s) xp must be a positive number.'):format(index, tostring(entry.item)))
+end
+
+for index, shop in ipairs(Config.Selling.shop) do
+    assert(type(shop.ped) == 'string' and shop.ped ~= '',
+        ('qbmetaldetecting Config.Selling.shop[%d].ped must be a non-empty model name.'):format(index))
+    for _, group in ipairs({ 'components', 'props' }) do
+        for id, entry in pairs(type(shop.outfit) == 'table' and shop.outfit[group] or {}) do
+            assert(tonumber(id) and type(entry) == 'table' and type(entry.d) == 'number' and (entry.t == nil or type(entry.t) == 'number'),
+                ('qbmetaldetecting Config.Selling.shop[%d].outfit.%s[%s] needs numeric d (and t).'):format(index, group, tostring(id)))
+        end
+    end
 end
 
 assert(type(Config.Skill.cooldown) == 'table'
