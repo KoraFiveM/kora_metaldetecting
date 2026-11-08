@@ -210,9 +210,11 @@ end
 
 Kora.events.onPush('qbmetaldetecting:client:startedDetecting', beginDetecting)
 Kora.events.onPush('qbmetaldetecting:client:stoppedDetecting', function() stopDetecting(false) end)
-Kora.events.onPush('qbmetaldetecting:client:foundLoot', function(item)
+Kora.events.onPush('qbmetaldetecting:client:foundLoot', function(item, cooldown)
     local definition = exports.kora_core:getShared('items', item)
     notify(('You found %s.'):format(definition and definition.label or item), 'success')
+    local seconds = tonumber(cooldown)
+    if seconds and seconds > 0 then currentCooldownMs = math.floor(seconds * 1000) end
 end)
 
 CreateThread(initLocations)

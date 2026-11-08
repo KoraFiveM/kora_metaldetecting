@@ -136,11 +136,12 @@ Kora.events.register('qbmetaldetecting:server:completedFind', function(src, grou
     end
 
     local after = skillData(src) or before
-    cooldowns[src] = GetGameTimer() + cooldownForLevel(after.level, after.maxLevel) * 1000
+    local nextCooldown = cooldownForLevel(after.level, after.maxLevel)
+    cooldowns[src] = GetGameTimer() + nextCooldown * 1000
     if after.level > before.level then
         notify(src, ('Metal detecting level %d reached.'):format(after.level), 'success')
     end
-    Kora.events.push(src, 'qbmetaldetecting:client:foundLoot', find.item)
+    Kora.events.push(src, 'qbmetaldetecting:client:foundLoot', find.item, nextCooldown)
 end, { rateLimit = { max = 4, window = 10000 } })
 
 Kora.events.register('qbmetaldetecting:server:purchasedDetector', function(src, shopIndex, account)
