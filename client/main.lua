@@ -181,16 +181,23 @@ end
 
 local function addBlip(location)
     if not location.blip or location.blip.enabled == false then return end
-    Kora.blips.create(location.coords, {
+    local options = {
         sprite = location.blip.sprite,
         color = location.blip.color,
         scale = location.blip.scale,
-        category = 'Other',
+        shortRange = location.blip.shortRange ~= false,
+        category = location.blip.category or 'Other',
         name = location.blip.name,
-    })
+    }
+    local ok = pcall(Kora.blips.create, location.coords, options)
+    if not ok then
+        options.category = 'Other'
+        pcall(Kora.blips.create, location.coords, options)
+    end
 end
 
 local function initLocations()
+    for _, shop in ipairs(Config.Selling.shop) do addBlip(shop) end
     for index, wash in ipairs(Config.Selling.wash) do
         addBlip(wash)
         Kora.interact.addCircleZone(('md-metal-wash-%d'):format(index), wash.coords, 1.5, {
