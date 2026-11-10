@@ -1,5 +1,5 @@
 local IMAGE_BASE = 'nui://kora_inventory/images/'
-local appId = 'qbmetaldetecting:shop'
+local appId = 'kora_metaldetecting:shop'
 local defaultView = 'buy'
 
 local function notify(message, type_)
@@ -152,7 +152,7 @@ Kora.nui.registerApp({
 
         if actionId == 'buy-cash' or actionId == 'buy-card' then
             local account = actionId == 'buy-cash' and 'cash' or 'bank'
-            Kora.events.trigger('qbmetaldetecting:server:purchasedDetector', shopIndex, account)
+            Kora.events.trigger('kora_metaldetecting:server:purchasedDetector', shopIndex, account)
             return { close = true }
         end
 
@@ -161,7 +161,7 @@ Kora.nui.registerApp({
             local amount = math.floor(tonumber(context.value and context.value.amount) or 0)
             if not item or amount < 1 then return end
 
-            Kora.events.trigger('qbmetaldetecting:server:soldLoot', shopIndex, item, amount)
+            Kora.events.trigger('kora_metaldetecting:server:soldLoot', shopIndex, item, amount)
             return {
                 update = { navigation = buildNavigation() },
                 notice = { tone = 'success', message = ('Selling %d x %s...'):format(amount, item) },
@@ -232,6 +232,7 @@ local function setupShopPed(index)
     if state.dressed ~= entity then
         state.dressed = entity
         dressPed(entity, state.data)
+        SetEntityInvincible(entity, true)
         SetBlockingOfNonTemporaryEvents(entity, true)
         SetPedCanRagdoll(entity, false)
         if type(state.data.scenario) == 'string' and state.data.scenario ~= '' then

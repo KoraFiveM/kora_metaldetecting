@@ -61,7 +61,7 @@ local function stopDetecting(tellServer)
     Kora.progressbar.cancel()
     Kora.minigames.cancel()
     cleanupDetector()
-    if tellServer then Kora.events.trigger('qbmetaldetecting:server:stoppedDetecting') end
+    if tellServer then Kora.events.trigger('kora_metaldetecting:server:stoppedDetecting') end
 end
 
 local function resumeDetectingLoop()
@@ -72,7 +72,7 @@ local function resumeDetectingLoop()
 end
 
 local function playFind(ground)
-    local authorization = Kora.callback.trigger('qbmetaldetecting:server:beginFind', ground)
+    local authorization = Kora.callback.trigger('kora_metaldetecting:server:beginFind', ground)
     if not authorization then return end
 
     local result = Kora.minigames.play('skillbar', nil, authorization)
@@ -88,7 +88,7 @@ local function playFind(ground)
     if not active then return end
 
     ClearPedTasks(ped)
-    Kora.events.trigger('qbmetaldetecting:server:completedFind', ground, result.proof, authorization)
+    Kora.events.trigger('kora_metaldetecting:server:completedFind', ground, result.proof, authorization)
     Wait(Config.Detection.digDuration)
     resumeDetectingLoop()
 end
@@ -100,19 +100,19 @@ local function beginDetecting(cooldown)
     end
     if IsPedInAnyVehicle(PlayerPedId(), false) then
         notify('You cannot use a metal detector in a vehicle.', 'error')
-        Kora.events.trigger('qbmetaldetecting:server:stoppedDetecting')
+        Kora.events.trigger('kora_metaldetecting:server:stoppedDetecting')
         return
     end
     local ped = PlayerPedId()
     if IsEntityDead(ped) then
-        Kora.events.trigger('qbmetaldetecting:server:stoppedDetecting')
+        Kora.events.trigger('kora_metaldetecting:server:stoppedDetecting')
         return
     end
     detectorProp = Kora.entities.create(Config.Detection.detectorModel, GetEntityCoords(ped), {})
     AttachEntityToEntity(detectorProp, ped, GetPedBoneIndex(ped, 57005), 0.8, 0.06, 0.1, 5.0, -99.0, 56.0, true, true, false, true, 1, true)
     if not detectorProp then
         notify('The metal detector could not be equipped.', 'error')
-        Kora.events.trigger('qbmetaldetecting:server:stoppedDetecting')
+        Kora.events.trigger('kora_metaldetecting:server:stoppedDetecting')
         return
     end
     Kora.anim.play(ped, 'anim@heists@narcotics@trash', 'walk', { flag = 51 })
@@ -160,7 +160,7 @@ local function washClump(washIndex)
         return
     end
 
-    local authorization = Kora.callback.trigger('qbmetaldetecting:server:beginWash', washIndex)
+    local authorization = Kora.callback.trigger('kora_metaldetecting:server:beginWash', washIndex)
     if not authorization then return end
 
     local result = Kora.minigames.play('skillbar', nil, authorization)
@@ -176,7 +176,7 @@ local function washClump(washIndex)
         return
     end
 
-    Kora.events.trigger('qbmetaldetecting:server:washedClump', washIndex, result.proof, authorization)
+    Kora.events.trigger('kora_metaldetecting:server:washedClump', washIndex, result.proof, authorization)
 end
 
 local function addBlip(location)
@@ -208,9 +208,9 @@ local function initLocations()
     end
 end
 
-Kora.events.onPush('qbmetaldetecting:client:startedDetecting', beginDetecting)
-Kora.events.onPush('qbmetaldetecting:client:stoppedDetecting', function() stopDetecting(false) end)
-Kora.events.onPush('qbmetaldetecting:client:foundLoot', function(item, cooldown)
+Kora.events.onPush('kora_metaldetecting:client:startedDetecting', beginDetecting)
+Kora.events.onPush('kora_metaldetecting:client:stoppedDetecting', function() stopDetecting(false) end)
+Kora.events.onPush('kora_metaldetecting:client:foundLoot', function(item, cooldown)
     local definition = exports.kora_core:getShared('items', item)
     notify(('You found %s.'):format(definition and definition.label or item), 'success')
     local seconds = tonumber(cooldown)

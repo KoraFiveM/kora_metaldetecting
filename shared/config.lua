@@ -104,18 +104,18 @@ Config = {
 
 for index, entry in ipairs(Config.Loot.items) do
     assert(type(entry.level) == 'number' and entry.level >= 1 and entry.level % 1 == 0,
-        ('qbmetaldetecting Config.Loot.items[%d] (%s) level must be a positive integer.'):format(index, tostring(entry.item)))
+        ('kora_metaldetecting Config.Loot.items[%d] (%s) level must be a positive integer.'):format(index, tostring(entry.item)))
     assert(type(entry.xp) == 'number' and entry.xp > 0,
-        ('qbmetaldetecting Config.Loot.items[%d] (%s) xp must be a positive number.'):format(index, tostring(entry.item)))
+        ('kora_metaldetecting Config.Loot.items[%d] (%s) xp must be a positive number.'):format(index, tostring(entry.item)))
 end
 
 for index, shop in ipairs(Config.Selling.shop) do
     assert(type(shop.ped) == 'string' and shop.ped ~= '',
-        ('qbmetaldetecting Config.Selling.shop[%d].ped must be a non-empty model name.'):format(index))
+        ('kora_metaldetecting Config.Selling.shop[%d].ped must be a non-empty model name.'):format(index))
     for _, group in ipairs({ 'components', 'props' }) do
         for id, entry in pairs(type(shop.outfit) == 'table' and shop.outfit[group] or {}) do
             assert(tonumber(id) and type(entry) == 'table' and type(entry.d) == 'number' and (entry.t == nil or type(entry.t) == 'number'),
-                ('qbmetaldetecting Config.Selling.shop[%d].outfit.%s[%s] needs numeric d (and t).'):format(index, group, tostring(id)))
+                ('kora_metaldetecting Config.Selling.shop[%d].outfit.%s[%s] needs numeric d (and t).'):format(index, group, tostring(id)))
         end
     end
 end
@@ -124,6 +124,6 @@ assert(type(Config.Skill.cooldown) == 'table'
     and type(Config.Skill.cooldown.atLevel1) == 'number' and Config.Skill.cooldown.atLevel1 > 0
     and type(Config.Skill.cooldown.atMaxLevel) == 'number' and Config.Skill.cooldown.atMaxLevel > 0
     and Config.Skill.cooldown.atMaxLevel <= Config.Skill.cooldown.atLevel1,
-    'qbmetaldetecting Config.Skill.cooldown must define a positive atLevel1 >= atMaxLevel, in seconds.')
+    'kora_metaldetecting Config.Skill.cooldown must define a positive atLevel1 >= atMaxLevel, in seconds.')
 
 if Kora and Kora.config and Kora.config.adopt then Config = Kora.config.adopt(Config) end

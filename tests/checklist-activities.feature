@@ -10,7 +10,7 @@ Feature: kora_metaldetecting — Activities
     Given my cash balance is at least 500
     When I manually: go to the priest ped at the Vespucci beach metal detector shop
     And I select the "Open Metal Detector Shop" target option
-    Then the "qbmetaldetecting:shop" app opens
+    Then the "kora_metaldetecting:shop" app opens
     When I manually: buy the metal detector for $500 using cash or card
     Then I should see a notification containing "Metal detector purchased."
     And I should have 1 "metaldetector"
@@ -157,7 +157,7 @@ Feature: kora_metaldetecting — Activities
     """
     Given I have 1 "antique_coin"
     When I manually: go to the Metal Detector Shop and open it
-    Then the "qbmetaldetecting:shop" app should be open
+    Then the "kora_metaldetecting:shop" app should be open
     When I manually: open the Sell tab, pick the antique coin, enter an amount and sell
     Then I should see a notification containing "Sold"
     And I confirm: the money paid matches the configured value
@@ -168,7 +168,7 @@ Feature: kora_metaldetecting — Activities
     Checklist test: Run /metaldetectcatalog; panel shows your level, max level, detector and loot table with unlock levels; Escape closes.
     """
     When I run the command "/metaldetectcatalog"
-    Then the "qbmetaldetecting:catalog" app opens
+    Then the "kora_metaldetecting:catalog" app opens
     And I confirm: the panel shows my level, max level and detector
     And I confirm: the loot table shows unlock levels
     When I manually: press Escape

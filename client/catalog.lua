@@ -1,5 +1,5 @@
 local IMAGE_BASE = 'nui://kora_inventory/images/'
-local appId = 'qbmetaldetecting:catalog'
+local appId = 'kora_metaldetecting:catalog'
 local inited = false
 
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()

@@ -3,11 +3,9 @@ game 'gta5'
 lua54 'yes'
 
 name 'kora_metaldetecting'
--- Keep the legacy resource name resolvable for exports['qbmetaldetecting'] callers.
-provide 'qbmetaldetecting'
 author 'qbcore2'
 version '3.0.0'
-description 'Kora metal detecting with kora_lib minigames and qbskills progression'
+description 'Kora metal detecting with kora_lib minigames and kora_skills progression'
 
 dependencies {
     'kora_core',

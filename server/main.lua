@@ -40,7 +40,7 @@ end
 local function skillData(src)
     local data, err = exports.kora_skills:getRep(src, Config.Skill.name)
     if not data then
-        print(('[qbmetaldetecting] could not read %s skill for %s: %s'):format(Config.Skill.name, src, tostring(err)))
+        print(('[kora_metaldetecting] could not read %s skill for %s: %s'):format(Config.Skill.name, src, tostring(err)))
         return nil
     end
     return data
@@ -52,7 +52,7 @@ local function clearPlayer(src, tellClient)
     delayBySource[src] = nil
     pendingFinds[src] = nil
     pendingWashes[src] = nil
-    if tellClient then Kora.events.push(src, 'qbmetaldetecting:client:stoppedDetecting') end
+    if tellClient then Kora.events.push(src, 'kora_metaldetecting:client:stoppedDetecting') end
 end
 
 local function stopDetector(src)
@@ -93,17 +93,17 @@ Core:createUseable(Config.Items.detector, function(src)
     activeDetectors[src] = true
     local startCooldown = cooldownForLevel(skill.level, skill.maxLevel)
     cooldowns[src] = GetGameTimer() + startCooldown * 1000
-    Kora.events.push(src, 'qbmetaldetecting:client:startedDetecting', startCooldown)
+    Kora.events.push(src, 'kora_metaldetecting:client:startedDetecting', startCooldown)
 end)
 
-Kora.events.register('qbmetaldetecting:server:stoppedDetecting', function(src)
+Kora.events.register('kora_metaldetecting:server:stoppedDetecting', function(src)
     stopDetector(src)
 end, { rateLimit = { max = 3, window = 5000 } })
 
 -- The client only renders the skillbar; the server is the one that decides
 -- whether it was actually played and passed. Without this, a modified client
 -- could skip the minigame entirely and spam completedFind for free loot/XP.
-Kora.callback.register('qbmetaldetecting:server:beginFind', function(src, ground)
+Kora.callback.register('kora_metaldetecting:server:beginFind', function(src, ground)
     if not activeDetectors[src] or not isAllowedGround(ground) then return false end
     if (cooldowns[src] or 0) > GetGameTimer() or not playerHas(src, Config.Items.detector) then return false end
     if not skillData(src) then return false end
@@ -113,7 +113,7 @@ Kora.callback.register('qbmetaldetecting:server:beginFind', function(src, ground
     return authorization
 end, { rateLimit = { max = 4, window = 10000 } })
 
-Kora.events.register('qbmetaldetecting:server:completedFind', function(src, ground, proof, authorization)
+Kora.events.register('kora_metaldetecting:server:completedFind', function(src, ground, proof, authorization)
     if not activeDetectors[src] or not isAllowedGround(ground) then return end
     if (cooldowns[src] or 0) > GetGameTimer() or not playerHas(src, Config.Items.detector) then return end
     if type(proof) ~= 'string' or not authorization or pendingFinds[src] ~= authorization
@@ -132,7 +132,7 @@ Kora.events.register('qbmetaldetecting:server:completedFind', function(src, grou
 
     local awarded, awardErr = exports.kora_skills:addRep(src, Config.Skill.name, find.xp)
     if not awarded then
-        print(('[qbmetaldetecting] failed to award skill XP to %s: %s'):format(src, tostring(awardErr)))
+        print(('[kora_metaldetecting] failed to award skill XP to %s: %s'):format(src, tostring(awardErr)))
     end
 
     local after = skillData(src) or before
@@ -141,10 +141,10 @@ Kora.events.register('qbmetaldetecting:server:completedFind', function(src, grou
     if after.level > before.level then
         notify(src, ('Metal detecting level %d reached.'):format(after.level), 'success')
     end
-    Kora.events.push(src, 'qbmetaldetecting:client:foundLoot', find.item, nextCooldown)
+    Kora.events.push(src, 'kora_metaldetecting:client:foundLoot', find.item, nextCooldown)
 end, { rateLimit = { max = 4, window = 10000 } })
 
-Kora.events.register('qbmetaldetecting:server:purchasedDetector', function(src, shopIndex, account)
+Kora.events.register('kora_metaldetecting:server:purchasedDetector', function(src, shopIndex, account)
     local shop = Config.Selling.shop[shopIndex]
     if not shop or (account ~= 'cash' and account ~= 'bank') then return end
     if not near(src, shop.coords, Config.Selling.interactionDistance) then return end
@@ -161,7 +161,7 @@ Kora.events.register('qbmetaldetecting:server:purchasedDetector', function(src, 
     notify(src, 'Metal detector purchased.', 'success')
 end, { rateLimit = { max = 2, window = 5000 } })
 
-Kora.events.register('qbmetaldetecting:server:soldLoot', function(src, shopIndex, item, amount)
+Kora.events.register('kora_metaldetecting:server:soldLoot', function(src, shopIndex, item, amount)
     local shop = Config.Selling.shop[shopIndex]
     local price = Config.Loot.sellValues[item]
     if not shop or not price or not near(src, shop.coords, Config.Selling.interactionDistance) then return end
@@ -180,7 +180,7 @@ Kora.events.register('qbmetaldetecting:server:soldLoot', function(src, shopIndex
     notify(src, ('Sold %d item(s) for $%d.'):format(amount, total), 'success')
 end, { rateLimit = { max = 8, window = 5000 } })
 
-Kora.callback.register('qbmetaldetecting:server:beginWash', function(src, washIndex)
+Kora.callback.register('kora_metaldetecting:server:beginWash', function(src, washIndex)
     local wash = Config.Selling.wash[washIndex]
     if not wash or not near(src, wash.coords, Config.Selling.interactionDistance) then return false end
     if not playerHas(src, Config.Items.clump) then return false end
@@ -190,7 +190,7 @@ Kora.callback.register('qbmetaldetecting:server:beginWash', function(src, washIn
     return authorization
 end, { rateLimit = { max = 4, window = 10000 } })
 
-Kora.events.register('qbmetaldetecting:server:washedClump', function(src, washIndex, proof, authorization)
+Kora.events.register('kora_metaldetecting:server:washedClump', function(src, washIndex, proof, authorization)
     local wash = Config.Selling.wash[washIndex]
     if not wash or not near(src, wash.coords, Config.Selling.interactionDistance) then return end
     if not playerHas(src, Config.Items.clump) then
@@ -230,13 +230,13 @@ local function spawnShopPed(index, shop)
     if ped == 0 or not DoesEntityExist(ped) then
         if not warnedShops[index] then
             warnedShops[index] = true
-            print(('[qbmetaldetecting] shop ped %d (%s) could not be created; check Config.Selling.shop[%d].ped'):format(index, tostring(shop.ped), index))
+            print(('[kora_metaldetecting] shop ped %d (%s) could not be created; check Config.Selling.shop[%d].ped'):format(index, tostring(shop.ped), index))
         end
         return
     end
     FreezeEntityPosition(ped, true)
-    SetEntityInvincible(ped, true)
-    SetBlockingOfNonTemporaryEvents(ped, true)
+    -- SetEntityInvincible / SetBlockingOfNonTemporaryEvents are client-only
+    -- natives; client/shop.lua applies them when the ped comes into scope.
     shopPeds[index] = ped
     local target = type(shop.target) == 'table' and shop.target or {}
     Entity(ped).state:set(SHOP_PED_KEY, {
@@ -271,4 +271,4 @@ AddEventHandler('onResourceStop', function(resource)
 end)
 
 AddEventHandler('QBCore:Server:OnPlayerUnload', function(src) clearPlayer(src, false) end)
-AddEventHandler('qbcore:server:playerDropped', function(src) clearPlayer(src, false) end)
+AddEventHandler('kora_core:server:playerDropped', function(src) clearPlayer(src, false) end)
