@@ -4,7 +4,7 @@ lua54 'yes'
 
 name 'kora_metaldetecting'
 author 'qbcore2'
-version '3.0.0'
+version '0.1.0'
 description 'Kora metal detecting with kora_lib minigames and kora_skills progression'
 
 dependencies {
