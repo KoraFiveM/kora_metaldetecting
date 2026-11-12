@@ -1,0 +1,44 @@
+{
+  "resource": "kora_metaldetecting",
+  "standardsRevision": "2026-11-12.2",
+  "realms": {
+    "client": [
+      "client/catalog.lua",
+      "client/main.lua",
+      "client/shop.lua"
+    ],
+    "server": [
+      "server/main.lua"
+    ],
+    "shared": [
+      "shared/config.lua"
+    ],
+    "manifest": [
+      "fxmanifest.lua"
+    ],
+    "test": []
+  },
+  "exclude": [
+    ".git/*",
+    ".github/*",
+    ".standards/*",
+    "node_modules/*",
+    "**/node_modules/*",
+    "vendor/*",
+    "**/vendor/*",
+    "web/*",
+    "ui/*",
+    "html/*",
+    "dist/*",
+    "artifacts/*",
+    "runtime/*",
+    "txData/*",
+    "storage/*",
+    "stream/*",
+    "docs/*",
+    "__pycache__/*",
+    "modules/lookup/data/*"
+  ],
+  "project": "Kora Framework",
+  "copyright": "Copyright © 2026 Kora Framework"
+}
