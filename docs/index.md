@@ -32,34 +32,16 @@ Declared in `fxmanifest.lua`: `kora_core`, `kora_inventory`, `kora_lib`, `kora_s
 
 Used but not declared as dependencies: `kora_target` (the shop ped target, `addEntity`), and optionally `kora_clothing` (`ApplyAppearanceToPed`, only used if started and the shop has an `outfit`). `Kora.interact` zones (from `kora_lib`) provide the wash spots.
 
-## Installation
+## Documentation map
 
-1. Place the resource in your resources folder and ensure it after its dependencies, for example:
-
-   ```cfg
-   ensure kora_lib
-   ensure kora_core
-   ensure kora_inventory
-   ensure kora_skills
-   ensure kora_target
-   ensure kora_metaldetecting
-   ```
-
-2. No SQL import is needed (see [Database](./database.md)).
-3. Make sure the items in [Items](./items.md) exist in the `kora_core` shared items and that the detector prop model (`Config.Detection.detectorModel`) is streamed by your server.
-4. Adjust [Configuration](./configuration.md).
-
-## Testing
-
-`tests/checklist-activities.feature` holds manual QA scenarios for `kora_qa` (registered with `qa_feature` in `fxmanifest.lua`).
-
-## Pages
-
-- [Configuration](./configuration.md) - every `Config` option
+- [Installation](./installation.md) - install steps, dependencies, required items and skill, and the config option reference from the original docs
+- [How to use](./how-to-use.md) - the detect, find, wash, shop and catalog flow and its server-side verification
+- [Commands](./commands.md) - `/metaldetectcatalog`
+- [Configuration](./configuration.md) - every `Config` option with defaults and shop/wash entry fields
 - [Items](./items.md) - detector, clump, loot table and sell values
-- [Commands and events](./events.md) - the command, net events, callbacks and listened events
+- [Events and callbacks](./events.md) - net events, callbacks, client pushes and listened events with rate limits
 - [Shop and catalog UI](./ui.md) - the shop, wash and catalog interfaces and the player flow
-- [Database](./database.md) - database usage
+- [Database](./database.md) - database usage (none)
 - [Troubleshooting](./troubleshooting.md) - common problems and caveats
 
-This resource exposes no exports and defines no ACE permissions.
+This resource exposes no exports and defines no ACE permissions, so there is no API reference.

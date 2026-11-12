@@ -4,7 +4,7 @@
 
 ## Documentation
 
-User-facing documentation lives in `docs/` (Markdown, published via the Kora Docusaurus site, kora_docs_next). Read `docs/index.md` first for an overview of features, configuration, commands, exports, events and database usage.
+User-facing documentation lives in `docs/` (Markdown, published via the Kora Docusaurus site, kora_docs_next). Read `docs/index.md` first; it has the overview, features and a documentation map. Docs layout: `index.md` (hub), `installation.md` (install steps, dependencies, required items/skill, config option reference, requirements), `how-to-use.md` (detect/find/wash/shop flow and server verification), `commands.md` (`/metaldetectcatalog`), and topic pages `configuration.md`, `items.md`, `events.md` (callbacks, net events, listened events), `ui.md`, `database.md`, `troubleshooting.md`. The resource has no exports, so there is no `api/` section. Change the page that matches the topic; do not create duplicates.
 
 When you add, change, or remove a feature, config option, command, export, event, item, permission, or database table/column, update the matching page in `docs/` in the same change. Keep docs accurate to the code; do not document behaviour that does not exist.
 
