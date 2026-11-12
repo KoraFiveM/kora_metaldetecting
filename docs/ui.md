@@ -1,6 +1,6 @@
 ---
 title: Shop and catalog UI
-sidebar_position: 5
+sidebar_position: 9
 ---
 
 # Shop and catalog UI

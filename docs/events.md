@@ -1,17 +1,13 @@
 ---
-title: Commands and events
-sidebar_position: 4
+title: Events and callbacks
+sidebar_position: 8
 ---
 
-# Commands and events
+# Events and callbacks
 
 The resource exposes no exports. Everything below is internal to its client/server flow. Do not trigger the server events from other resources: they are rate limited, check proximity or minigame proofs, and silently ignore invalid requests.
 
-## Commands
-
-| Command | Side | Description |
-| --- | --- | --- |
-| `/metaldetectcatalog` | client | Opens the catalog panel. No permission check; available to everyone. |
+The only command, `/metaldetectcatalog`, is documented in [Commands](./commands.md).
 
 ## Server callbacks
 
