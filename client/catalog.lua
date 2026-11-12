@@ -40,12 +40,12 @@ local function buildLootItems(level)
 
         local descriptionParts = {
             unlocked
-                and ('Unlocked at level %d'):format(entry.level)
-                or ('Locked - requires level %d'):format(entry.level),
-            ('%d XP per find'):format(entry.xp),
+                and Kora.lang('Catalog.unlocked_at_level', entry.level)
+                or Kora.lang('Catalog.locked_requires_level', entry.level),
+            Kora.lang('Catalog.xp_per_find', entry.xp),
         }
         if sellPrice then
-            descriptionParts[#descriptionParts + 1] = ('Sells for $%d'):format(sellPrice)
+            descriptionParts[#descriptionParts + 1] = Kora.lang('Catalog.sells_for', sellPrice)
         end
 
         lootItems[#lootItems + 1] = {
@@ -63,24 +63,24 @@ local function buildDetectorView(level, maxLevel)
     local definition = itemDef(Config.Items.detector)
     return {
         id = Config.Items.detector,
-        label = definition and definition.label or 'Metal Detector',
+        label = definition and definition.label or Kora.lang('Ui.detector'),
         icon = definition and (IMAGE_BASE .. definition.image) or nil,
         content = {
-            title = definition and definition.label or 'Metal Detector',
+            title = definition and definition.label or Kora.lang('Ui.detector'),
             description = definition and definition.description or nil,
             blocks = {
                 {
                     type = 'stats',
                     items = {
-                        { label = 'Your Level', value = level,    icon = 'Star' },
-                        { label = 'Max Level',  value = maxLevel, icon = 'Trophy' },
+                        { label = Kora.lang('Ui.your_level'), value = level,    icon = 'Star' },
+                        { label = Kora.lang('Ui.max_level'),  value = maxLevel, icon = 'Trophy' },
                     },
                 },
                 {
                     type = 'list',
                     id = 'finds',
                     layout = 'list',
-                    empty = 'No finds configured for this detector.',
+                    empty = Kora.lang('Ui.no_finds_configured'),
                     items = buildLootItems(level),
                 },
             },
@@ -94,13 +94,13 @@ end
 
 Kora.nui.registerApp({
     id = appId,
-    title = 'Metal Detecting Catalog',
-    description = 'Finds and sell prices unlocked at your current metal detecting level.',
+    title = Kora.lang('Ui.catalog_title'),
+    description = Kora.lang('Ui.catalog_description'),
     icon = 'Search',
     layout = 'standard',
     width = 900,
     height = 640,
-    footer = 'Press Escape to close',
+    footer = Kora.lang('Ui.press_escape_to_close'),
     navigation = buildNavigation(),
 })
 

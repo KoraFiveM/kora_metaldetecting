@@ -2,6 +2,10 @@ fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
 
+files {
+    'locales/*.lua',
+}
+
 name 'kora_metaldetecting'
 author 'qbcore2'
 version '0.1.0'

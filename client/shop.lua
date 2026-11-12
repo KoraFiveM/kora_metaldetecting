@@ -3,7 +3,7 @@ local appId = 'kora_metaldetecting:shop'
 local defaultView = 'buy'
 
 local function notify(message, type_)
-    Kora.notify.send({ title = 'Metal Detecting', message = message, type = type_ or 'info' })
+    Kora.notify.send({ title = Kora.lang('Ui.title'), message = message, type = type_ or 'info' })
 end
 
 local function itemDef(name)
@@ -29,10 +29,10 @@ local function buildBuyView()
 
     return {
         id = 'buy',
-        label = 'Buy',
+        label = Kora.lang('Shop.buy'),
         icon = 'ShoppingCart',
         content = {
-            title = definition and definition.label or 'Metal Detector',
+            title = definition and definition.label or Kora.lang('Ui.detector'),
             description = definition and definition.description or nil,
             blocks = {
                 {
@@ -41,8 +41,8 @@ local function buildBuyView()
                     items = {
                         {
                             id = Config.Items.detector,
-                            label = definition and definition.label or 'Metal Detector',
-                            description = ('$%d'):format(price),
+                            label = definition and definition.label or Kora.lang('Ui.detector'),
+                            description = Kora.lang('Shop.price', price),
                             image = itemImage(definition),
                         },
                     },
@@ -51,17 +51,17 @@ local function buildBuyView()
             actions = {
                 {
                     id = 'buy-cash',
-                    label = ('Pay Cash — $%d'):format(price),
+                    label = Kora.lang('Shop.pay_cash', price),
                     icon = 'Banknote',
                     variant = 'primary',
-                    confirm = ('Buy a metal detector for $%d in cash?'):format(price),
+                    confirm = Kora.lang('Shop.confirm_cash', price),
                 },
                 {
                     id = 'buy-card',
-                    label = ('Pay Card — $%d'):format(price),
+                    label = Kora.lang('Shop.pay_card', price),
                     icon = 'CreditCard',
                     variant = 'secondary',
-                    confirm = ('Buy a metal detector for $%d on your card?'):format(price),
+                    confirm = Kora.lang('Shop.confirm_card', price),
                 },
             },
         },
@@ -80,17 +80,17 @@ local function buildSellItems()
             items[#items + 1] = {
                 id = entry.item,
                 label = label,
-                description = ('$%d each'):format(entry.price),
+                description = Kora.lang('Shop.each', entry.price),
                 image = itemImage(definition),
                 tone = 'success',
                 action = {
                     id = 'sell-item',
-                    label = 'Sell',
+                    label = Kora.lang('Shop.sell'),
                     icon = 'Coins',
                     fields = {
                         {
                             id = 'amount',
-                            label = ('Amount to sell (%s)'):format(label),
+                            label = Kora.lang('Shop.amount_to_sell', label),
                             type = 'number',
                             default = 1,
                             min = 1,
@@ -109,11 +109,11 @@ end
 local function buildSellView()
     return {
         id = 'sell',
-        label = 'Sell',
+        label = Kora.lang('Shop.sell'),
         icon = 'Coins',
         content = {
-            title = 'Sell Detected Loot',
-            description = 'Pick an item, choose how many to sell, and confirm.',
+            title = Kora.lang('Shop.sell_title'),
+            description = Kora.lang('Shop.sell_description'),
             blocks = {
                 {
                     type = 'list',
@@ -121,7 +121,7 @@ local function buildSellView()
                     layout = 'list',
                     max = 10,
                     searchable = true,
-                    empty = 'You have nothing to sell yet.',
+                    empty = Kora.lang('Shop.nothing_to_sell'),
                     items = buildSellItems(),
                 },
             },
@@ -135,7 +135,7 @@ end
 
 Kora.nui.registerApp({
     id = appId,
-    title = 'Metal Detector Shop',
+    title = Kora.lang('Shop.title'),
     icon = 'Search',
     layout = 'standard',
     defaultView = defaultView,
@@ -146,7 +146,7 @@ Kora.nui.registerApp({
     onAction = function(actionId, context)
         local shopIndex = context.data and context.data.shopIndex
         if not shopIndex then
-            notify('Something went wrong opening the shop, try again.', 'error')
+            notify(Kora.lang('Shop.open_failed'), 'error')
             return { close = true }
         end
 
@@ -164,7 +164,7 @@ Kora.nui.registerApp({
             Kora.events.trigger('kora_metaldetecting:server:soldLoot', shopIndex, item, amount)
             return {
                 update = { navigation = buildNavigation() },
-                notice = { tone = 'success', message = ('Selling %d x %s...'):format(amount, item) },
+                notice = { tone = 'success', message = Kora.lang('Shop.selling', amount, item) },
             }
         end
     end,
