@@ -22,7 +22,7 @@ local function near(src, coords, distance)
 end
 
 local function notify(src, message, type_)
-    Kora.notify.send(src, { title = 'Metal Detecting', message = message, type = type_ or 'info' })
+    Kora.notify.send(src, { title = Kora.lang('Ui.title'), message = message, type = type_ or 'info' })
 end
 
 local function cooldownForLevel(level, maxLevel)
@@ -126,7 +126,7 @@ Kora.events.register('kora_metaldetecting:server:completedFind', function(src, g
     local find = chooseLoot(before.level, false)
     local added, addErr = Core:addItem(src, find.item, 1, nil, nil, 'metal detecting')
     if not added then
-        notify(src, addErr or 'You do not have room for that find.', 'error')
+        notify(src, addErr or Kora.lang('Notify.room_for_find'), 'error')
         return
     end
 
@@ -139,7 +139,7 @@ Kora.events.register('kora_metaldetecting:server:completedFind', function(src, g
     local nextCooldown = cooldownForLevel(after.level, after.maxLevel)
     cooldowns[src] = GetGameTimer() + nextCooldown * 1000
     if after.level > before.level then
-        notify(src, ('Metal detecting level %d reached.'):format(after.level), 'success')
+        notify(src, Kora.lang('Notify.level_reached', after.level), 'success')
     end
     Kora.events.push(src, 'kora_metaldetecting:client:foundLoot', find.item, nextCooldown)
 end, { rateLimit = { max = 4, window = 10000 } })
@@ -149,16 +149,16 @@ Kora.events.register('kora_metaldetecting:server:purchasedDetector', function(sr
     if not shop or (account ~= 'cash' and account ~= 'bank') then return end
     if not near(src, shop.coords, Config.Selling.interactionDistance) then return end
     if not Core:removeMoney(src, account, Config.Selling.detectorPrice, 'metal detector purchase') then
-        notify(src, 'You cannot afford a metal detector.', 'error')
+        notify(src, Kora.lang('Notify.cannot_afford_detector'), 'error')
         return
     end
     local added, addErr = Core:addItem(src, Config.Items.detector, 1, nil, nil, 'metal detector purchase')
     if not added then
         Core:addMoney(src, account, Config.Selling.detectorPrice, 'metal detector refund')
-        notify(src, addErr or 'You do not have room for a metal detector.', 'error')
+        notify(src, addErr or Kora.lang('Notify.room_for_detector'), 'error')
         return
     end
-    notify(src, 'Metal detector purchased.', 'success')
+    notify(src, Kora.lang('Notify.detector_purchased'), 'success')
 end, { rateLimit = { max = 2, window = 5000 } })
 
 Kora.events.register('kora_metaldetecting:server:soldLoot', function(src, shopIndex, item, amount)
@@ -169,7 +169,7 @@ Kora.events.register('kora_metaldetecting:server:soldLoot', function(src, shopIn
     amount = math.floor(tonumber(amount) or 0)
     local owned = Core:getItemCount(src, item) or 0
     if amount < 1 or amount > owned then
-        notify(src, ('You do not have %d x %s.'):format(amount, item), 'error')
+        notify(src, Kora.lang('Notify.missing_items', amount, item), 'error')
         return
     end
 
@@ -177,7 +177,7 @@ Kora.events.register('kora_metaldetecting:server:soldLoot', function(src, shopIn
 
     local total = amount * price
     Core:addMoney(src, 'cash', total, 'metal detecting sale')
-    notify(src, ('Sold %d item(s) for $%d.'):format(amount, total), 'success')
+    notify(src, Kora.lang('Notify.sold_items', amount, total), 'success')
 end, { rateLimit = { max = 8, window = 5000 } })
 
 Kora.callback.register('kora_metaldetecting:server:beginWash', function(src, washIndex)
@@ -194,7 +194,7 @@ Kora.events.register('kora_metaldetecting:server:washedClump', function(src, was
     local wash = Config.Selling.wash[washIndex]
     if not wash or not near(src, wash.coords, Config.Selling.interactionDistance) then return end
     if not playerHas(src, Config.Items.clump) then
-        notify(src, 'You do not have a clump to wash.', 'error')
+        notify(src, Kora.lang('Notify.no_clump_to_wash'), 'error')
         return
     end
     if type(proof) ~= 'string' or not authorization or pendingWashes[src] ~= authorization
@@ -207,10 +207,10 @@ Kora.events.register('kora_metaldetecting:server:washedClump', function(src, was
     local added, addErr = Core:addItem(src, find.item, 1, nil, nil, 'washed metal detecting clump')
     if not added then
         Core:addItem(src, Config.Items.clump, 1, nil, nil, 'failed clump wash refund')
-        notify(src, addErr or 'You do not have room for that find.', 'error')
+        notify(src, addErr or Kora.lang('Notify.room_for_find'), 'error')
         return
     end
-    notify(src, ('You washed the clump and found %s.'):format(find.item), 'success')
+    notify(src, Kora.lang('Notify.washed_clump', find.item), 'success')
 end, { rateLimit = { max = 4, window = 10000 } })
 
 -- Shop peds: one networked ped per shop. The definition lives in an entity

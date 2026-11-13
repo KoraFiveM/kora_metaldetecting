@@ -5,12 +5,12 @@ local detectionTextId
 local currentCooldownMs = 55000
 
 local function notify(message, type_)
-    Kora.notify.send({ title = 'Metal Detecting', message = message, type = type_ or 'info' })
+    Kora.notify.send({ title = Kora.lang('Ui.title'), message = message, type = type_ or 'info' })
 end
 
 local function setDetectionText(groundIsValid)
     if not Config.Detection.showText then return end
-    local text = groundIsValid and 'Suitable ground — the detector is searching.' or 'This ground is unsuitable for metal detecting.'
+    local text = groundIsValid and Kora.lang('Ui.suitable_ground') or Kora.lang('Ui.unsuitable_ground')
     if text == detectionText then return end
     detectionText = text
     if not detectionTextId then
@@ -95,11 +95,11 @@ end
 
 local function beginDetecting(cooldown)
     if active then
-        notify('You are already using a metal detector.', 'error')
+        notify(Kora.lang('Notify.already_detecting'), 'error')
         return
     end
     if IsPedInAnyVehicle(PlayerPedId(), false) then
-        notify('You cannot use a metal detector in a vehicle.', 'error')
+        notify(Kora.lang('Notify.vehicle_detecting'), 'error')
         Kora.events.trigger('kora_metaldetecting:server:stoppedDetecting')
         return
     end
@@ -111,7 +111,7 @@ local function beginDetecting(cooldown)
     detectorProp = Kora.entities.create(Config.Detection.detectorModel, GetEntityCoords(ped), {})
     AttachEntityToEntity(detectorProp, ped, GetPedBoneIndex(ped, 57005), 0.8, 0.06, 0.1, 5.0, -99.0, 56.0, true, true, false, true, 1, true)
     if not detectorProp then
-        notify('The metal detector could not be equipped.', 'error')
+        notify(Kora.lang('Notify.equip_failed'), 'error')
         Kora.events.trigger('kora_metaldetecting:server:stoppedDetecting')
         return
     end
@@ -134,7 +134,7 @@ local function beginDetecting(cooldown)
 
             if not active then return end
 
-            notify('You may have found something.', 'success')
+            notify(Kora.lang('Notify.found_something'), 'success')
             Wait(800)
             playFind(ground)
         end
@@ -145,7 +145,7 @@ end
 -- detection loop every second.
 Kora.cache.onChange('vehicle', function(vehicle)
     if not active or not vehicle then return end
-    notify('Metal detecting stopped in a vehicle.', 'error')
+    notify(Kora.lang('Notify.stopped_in_vehicle'), 'error')
     stopDetecting(true)
 end)
 
@@ -156,7 +156,7 @@ end)
 
 local function washClump(washIndex)
     if not exports.kora_inventory:HasItem(Config.Items.clump) then
-        notify('You need a clump to wash.', 'error')
+        notify(Kora.lang('Notify.need_clump'), 'error')
         return
     end
 
@@ -167,7 +167,7 @@ local function washClump(washIndex)
     if not result or not result.success or not result.proof then return end
 
     if not Kora.progressbar.start({
-        label = 'Washing clump...',
+        label = Kora.lang('Ui.washing_clump'),
         duration = 5000,
         canCancel = true,
         disable = { combat = true, car = true },
@@ -202,7 +202,7 @@ local function initLocations()
         addBlip(wash)
         Kora.interact.addCircleZone(('md-metal-wash-%d'):format(index), wash.coords, 1.5, {
             options = {
-                { label = 'Wash metal clump', icon = 'Waves', action = function() washClump(index) end },
+                { label = Kora.lang('Ui.wash_metal_clump'), icon = 'Waves', action = function() washClump(index) end },
             },
         })
     end
@@ -212,7 +212,7 @@ Kora.events.onPush('kora_metaldetecting:client:startedDetecting', beginDetecting
 Kora.events.onPush('kora_metaldetecting:client:stoppedDetecting', function() stopDetecting(false) end)
 Kora.events.onPush('kora_metaldetecting:client:foundLoot', function(item, cooldown)
     local definition = exports.kora_core:getShared('items', item)
-    notify(('You found %s.'):format(definition and definition.label or item), 'success')
+    notify(Kora.lang('Notify.found_item', definition and definition.label or item), 'success')
     local seconds = tonumber(cooldown)
     if seconds and seconds > 0 then currentCooldownMs = math.floor(seconds * 1000) end
 end)

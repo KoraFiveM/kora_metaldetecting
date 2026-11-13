@@ -2,8 +2,12 @@ fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
 
+files {
+    'locales/*.lua',
+}
+
 name 'kora_metaldetecting'
-author 'qbcore2'
+author 'Kora'
 version '0.2.1'
 description 'Kora metal detecting with kora_lib minigames and kora_skills progression'
 
