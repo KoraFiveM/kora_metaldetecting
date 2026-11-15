@@ -40,7 +40,11 @@ end
 local function skillData(src)
     local data, err = exports.kora_skills:getRep(src, Config.Skill.name)
     if not data then
-        print(('[kora_metaldetecting] could not read %s skill for %s: %s'):format(Config.Skill.name, src, tostring(err)))
+        Kora.logging.warn('skill.read_failed', 'Could not read skill data', {
+            skill = Config.Skill.name,
+            playerId = src,
+            error = tostring(err),
+        })
         return nil
     end
     return data
@@ -132,7 +136,7 @@ Kora.events.register('kora_metaldetecting:server:completedFind', function(src, g
 
     local awarded, awardErr = exports.kora_skills:addRep(src, Config.Skill.name, find.xp)
     if not awarded then
-        print(('[kora_metaldetecting] failed to award skill XP to %s: %s'):format(src, tostring(awardErr)))
+        Kora.logging.error('skill.award_failed', 'Failed to award skill XP', { playerId = src, error = tostring(awardErr) })
     end
 
     local after = skillData(src) or before
@@ -230,7 +234,10 @@ local function spawnShopPed(index, shop)
     if ped == 0 or not DoesEntityExist(ped) then
         if not warnedShops[index] then
             warnedShops[index] = true
-            print(('[kora_metaldetecting] shop ped %d (%s) could not be created; check Config.Selling.shop[%d].ped'):format(index, tostring(shop.ped), index))
+            Kora.logging.warn('shop.ped_create_failed', 'Shop ped could not be created; check Config.Selling.shop ped model', {
+                shopIndex = index,
+                model = tostring(shop.ped),
+            })
         end
         return
     end
