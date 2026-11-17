@@ -162,9 +162,10 @@ Kora.nui.registerApp({
             if not item or amount < 1 then return end
 
             Kora.events.trigger('kora_metaldetecting:server:soldLoot', shopIndex, item, amount)
+            local definition = itemDef(item)
             return {
                 update = { navigation = buildNavigation() },
-                notice = { tone = 'success', message = Kora.lang('Shop.selling', amount, item) },
+                notice = { tone = 'success', message = Kora.lang('Shop.selling', amount, definition and definition.label or item) },
             }
         end
     end,

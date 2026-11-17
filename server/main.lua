@@ -17,6 +17,12 @@ local function playerHas(src, item, amount)
     return (Core:getItemCount(src, item) or 0) >= (amount or 1)
 end
 
+-- Messages name an item by its label (gold ring), not its id (gold_ring_md).
+local function itemLabel(item)
+    local definition = Core:getShared('items', item)
+    return definition and definition.label or item
+end
+
 local function near(src, coords, distance)
     return Kora.distance.player(src, coords, distance or Config.Detection.distance)
 end
@@ -173,7 +179,7 @@ Kora.events.register('kora_metaldetecting:server:soldLoot', function(src, shopIn
     amount = math.floor(tonumber(amount) or 0)
     local owned = Core:getItemCount(src, item) or 0
     if amount < 1 or amount > owned then
-        notify(src, Kora.lang('Notify.missing_items', amount, item), 'error')
+        notify(src, Kora.lang('Notify.missing_items', amount, itemLabel(item)), 'error')
         return
     end
 
@@ -214,7 +220,7 @@ Kora.events.register('kora_metaldetecting:server:washedClump', function(src, was
         notify(src, addErr or Kora.lang('Notify.room_for_find'), 'error')
         return
     end
-    notify(src, Kora.lang('Notify.washed_clump', find.item), 'success')
+    notify(src, Kora.lang('Notify.washed_clump', itemLabel(find.item)), 'success')
 end, { rateLimit = { max = 4, window = 10000 } })
 
 -- Shop peds: one networked ped per shop. The definition lives in an entity
