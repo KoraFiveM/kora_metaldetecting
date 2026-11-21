@@ -8,7 +8,7 @@ files {
 
 name 'kora_metaldetecting'
 author 'Kora'
-version '0.2.1'
+version '0.2.2'
 description 'Kora metal detecting with kora_lib minigames and kora_skills progression'
 
 dependencies {
