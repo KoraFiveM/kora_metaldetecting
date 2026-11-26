@@ -210,7 +210,7 @@ end
 local function dressPed(ped, data)
     if type(data.outfit) ~= 'table' then return end
     if GetResourceState('kora_clothing') == 'started' then
-        local ok, applied = pcall(function() return exports.kora_clothing:ApplyAppearanceToPed(ped, data.model, data.outfit) end)
+        local ok, applied = pcall(function() return Kora.bridge.applyAppearanceToPed(ped, data.model, data.outfit) end)
         if ok and applied == true then return end
     end
     applyFallbackSkin(ped, data.outfit)
