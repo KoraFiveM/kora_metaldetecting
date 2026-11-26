@@ -14,7 +14,7 @@ local function setDetectionText(groundIsValid)
     if text == detectionText then return end
     detectionText = text
     if not detectionTextId then
-        detectionTextId = Kora.bridge.drawTextText(text, { position = 'bottom-center', icon = 'Search' })
+        detectionTextId = Kora.bridge.drawText(text, { position = 'bottom-center', icon = 'Search' })
     else
         Kora.bridge.updateText(detectionTextId, text, { position = 'bottom-center', icon = 'Search' })
     end
