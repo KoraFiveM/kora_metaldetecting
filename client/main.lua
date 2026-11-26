@@ -5,7 +5,7 @@ local detectionTextId
 local currentCooldownMs = 55000
 
 local function notify(message, type_)
-    Kora.notify.send({ title = Kora.lang('Ui.title'), message = message, type = type_ or 'info' })
+    Kora.bridge.sendNotify({ title = Kora.lang('Ui.title'), message = message, type = type_ or 'info' })
 end
 
 local function setDetectionText(groundIsValid)
