@@ -5,7 +5,7 @@ local detectionTextId
 local currentCooldownMs = 55000
 
 local function notify(message, type_)
-    Kora.notify.send({ title = Kora.lang('Ui.title'), message = message, type = type_ or 'info' })
+    Kora.bridge.sendNotify({ title = Kora.lang('Ui.title'), message = message, type = type_ or 'info' })
 end
 
 local function setDetectionText(groundIsValid)
@@ -14,15 +14,15 @@ local function setDetectionText(groundIsValid)
     if text == detectionText then return end
     detectionText = text
     if not detectionTextId then
-        detectionTextId = Kora.textui.show(text, { position = 'bottom-center', icon = 'Search' })
+        detectionTextId = Kora.bridge.drawText(text, { position = 'bottom-center', icon = 'Search' })
     else
-        Kora.textui.update(detectionTextId, text, { position = 'bottom-center', icon = 'Search' })
+        Kora.bridge.updateText(detectionTextId, text, { position = 'bottom-center', icon = 'Search' })
     end
 end
 
 local function hideDetectionText()
     if detectionTextId then
-        Kora.textui.hide(detectionTextId)
+        Kora.bridge.hideText(detectionTextId)
         detectionTextId = nil
         detectionText = nil
     end

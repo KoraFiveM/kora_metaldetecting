@@ -28,7 +28,7 @@ local function near(src, coords, distance)
 end
 
 local function notify(src, message, type_)
-    Kora.notify.send(src, { title = Kora.lang('Ui.title'), message = message, type = type_ or 'info' })
+    Kora.bridge.sendNotify(src, { title = Kora.lang('Ui.title'), message = message, type = type_ or 'info' })
 end
 
 local function cooldownForLevel(level, maxLevel)
